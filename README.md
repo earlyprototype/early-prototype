@@ -6,7 +6,7 @@ A personal [Claude Code](https://code.claude.com) **plugin marketplace** — a c
 
 ```bash
 # 1. Register this marketplace (once)
-/plugin marketplace add <your-github-username>/early-prototype
+/plugin marketplace add earlyprototype/early-prototype
 
 # 2. Install the plugin
 /plugin install early-prototype@early-prototype
