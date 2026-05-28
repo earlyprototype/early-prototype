@@ -77,13 +77,38 @@ function dateStr() {
   return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
 }
 
-function deriveShortId(transcriptPath) {
+// 5-step discovery chain per DESIGN-GUIDELINES.md §2 (hook side).
+// Returns the last-8-hex shortId or 'nosessid' if every source is empty.
+function deriveShortId(input, transcriptPath) {
   if (transcriptPath) {
     const m = path.basename(transcriptPath).match(/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\.jsonl$/i);
     if (m) return m[1].slice(-8).toLowerCase();
   }
+  if (input && typeof input.session_id === 'string' && input.session_id.length >= 8) {
+    return input.session_id.slice(-8).toLowerCase();
+  }
   const env = process.env.CLAUDE_SESSION_ID;
-  if (env && env.length > 0) return env.slice(-8).toLowerCase();
+  if (env && env.length >= 8) return env.slice(-8).toLowerCase();
+  // Glob fallback: derive shortId from most-recent transcript in the
+  // encoded-cwd projects dir. Last resort before 'nosessid'.
+  try {
+    const cwd = process.cwd();
+    const encoded = cwd.replace(/[\\/:]/g, '-');
+    const projDir = path.join(os.homedir(), '.claude', 'projects', encoded);
+    const entries = fs.readdirSync(projDir);
+    let best = null;
+    for (const name of entries) {
+      if (!name.endsWith('.jsonl')) continue;
+      const full = path.join(projDir, name);
+      let mtimeMs = 0;
+      try { mtimeMs = fs.statSync(full).mtimeMs; } catch (_) { continue; }
+      if (!best || mtimeMs > best.mtimeMs) best = { name, mtimeMs };
+    }
+    if (best) {
+      const m = best.name.match(/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\.jsonl$/i);
+      if (m) return m[1].slice(-8).toLowerCase();
+    }
+  } catch (_) { /* fall through */ }
   return 'nosessid';
 }
 
@@ -158,14 +183,17 @@ function extractSummary(transcriptPath) {
 
 // ---------- main ----------
 async function main() {
-  // Resolve transcript path: stdin JSON first, env var fallback (session-end.js 181-198).
-  let transcriptPath = null;
+  // Parse stdin JSON for use by both transcript-path resolution and the
+  // shortId discovery chain (input.session_id is one of the fallback sources).
+  let input = {};
   try {
-    const input = JSON.parse(stdinData || '{}');
-    if (typeof input.transcript_path === 'string' && input.transcript_path.length > 0) {
-      transcriptPath = input.transcript_path;
-    }
-  } catch { /* malformed stdin, fall through to env var */ }
+    input = JSON.parse(stdinData || '{}');
+  } catch { /* malformed stdin, keep input as {} */ }
+
+  let transcriptPath = null;
+  if (typeof input.transcript_path === 'string' && input.transcript_path.length > 0) {
+    transcriptPath = input.transcript_path;
+  }
   if (!transcriptPath && process.env.CLAUDE_TRANSCRIPT_PATH) {
     transcriptPath = process.env.CLAUDE_TRANSCRIPT_PATH;
   }
@@ -173,7 +201,8 @@ async function main() {
   const cwd = process.cwd();
 
   // Derive shortId early — needed to construct the scoped marker filename.
-  const shortId = deriveShortId(transcriptPath);
+  // Discovery chain: input.transcript_path → input.session_id → CLAUDE_SESSION_ID env → glob → 'nosessid'.
+  const shortId = deriveShortId(input, transcriptPath);
 
   // Worker-session marker. Per the 2026-05-28 marker-convention change, the
   // primary path is the shortId-scoped `.claude/active-task-<shortId>.txt`.
