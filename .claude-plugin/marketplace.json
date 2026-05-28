@@ -4,15 +4,27 @@
     "name": "Thom Conaty",
     "email": "thomconatydesign@gmail.com"
   },
-  "description": "Thom's early-prototype Claude Code skills — research-programme context and collaboration skills, published as installable plugins.",
+  "description": "Thom's early-prototype Claude Code marketplace — installable bundles of his prototype skills, hooks, and agents.",
+  "metadata": {
+    "pluginRoot": "./plugins"
+  },
   "plugins": [
     {
       "name": "early-prototype",
-      "source": "./plugins/early-prototype",
-      "description": "Bundle of Thom's prototype skills: /notionstime (research-programme context) and /thomtime (collaboration profile, placeholder pending rebuild).",
+      "source": "./early-prototype",
+      "description": "PM / Worker / Coach session-lifecycle suite — the timeteam skills, hooks, and agent that turn Claude Code sessions into auditable role-based work cycles.",
       "version": "0.1.0",
       "category": "productivity",
-      "keywords": ["research", "context", "notionstime", "thomtime"]
+      "keywords": [
+        "timeteam",
+        "session-lifecycle",
+        "kanban",
+        "pm",
+        "worker",
+        "coach",
+        "handoffs",
+        "adhd-scaffolding"
+      ]
     }
   ]
 }
