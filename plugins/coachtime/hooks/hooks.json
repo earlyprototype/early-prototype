@@ -1,0 +1,54 @@
+{
+  "description": "coachtime plugin hooks — the ambient backstops for coach sessions. coach-intent-capture records what Thom said he was about to do (SessionStart) and his latest prompt intent (UserPromptSubmit); coach-history-mirror logs every tool/skill invocation to coach-history.jsonl (PostToolUse); coach-drift-flag keeps a coach session off implementation edits (PreToolUse on edit tools).",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/coach-intent-capture.js\" start",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/coach-intent-capture.js\" prompt",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/coach-history-mirror.js\"",
+            "timeout": 10,
+            "async": true
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/coach-drift-flag.js\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}
