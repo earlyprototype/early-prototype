@@ -1,7 +1,7 @@
 {
   "name": "early-prototype",
-  "version": "0.1.0",
-  "description": "PM / Worker / Coach session-lifecycle suite. Skills for opening, queuing, and closing role-based work sessions; hooks for handoff generation and drift detection; an agent for kanban mutations. Skills invoke as early-prototype:<name>.",
+  "version": "0.2.0",
+  "description": "Product / PM / Worker session-lifecycle suite. Skills for opening, queuing, and closing role-based work sessions; hooks for handoff generation; an agent for kanban mutations. Skills invoke as early-prototype:<name>.",
   "author": {
     "name": "Thom Conaty",
     "email": "thomconatydesign@gmail.com"
@@ -12,9 +12,9 @@
     "timeteam",
     "session-lifecycle",
     "kanban",
+    "product",
     "pm",
     "worker",
-    "coach",
     "handoffs"
   ]
 }
