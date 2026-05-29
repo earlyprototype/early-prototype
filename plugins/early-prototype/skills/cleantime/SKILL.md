@@ -4,7 +4,8 @@ description: |
   Aggressive wipe of all PM/Worker/Coach state in the current project. Globs
   and deletes all shortId-scoped marker variants
   (`<cwd>/.claude/pm-session-*.txt`, `active-task-*.txt`, `coach-session-*.txt`,
-  `worker-session-id-*.txt`) PLUS the legacy unscoped variants for backward
+  `prod-session-*.txt`, `worker-session-id-*.txt`) PLUS the legacy unscoped
+  variants for backward
   compatibility. Also deletes `worker-notes.md` and `.archive` siblings, all
   handoff pointers in `<cwd>/.claude/inbox/pm/`, all session logs in
   `<cwd>/.claude/inbox/pm/sessions/`, and all `<cwd>/session-handover-*.md`
@@ -50,6 +51,7 @@ This prevents accidentally wiping global state if `/cleantime` is run somewhere 
    | PM session markers | `<cwd>/.claude/pm-session-*.txt` | all sessions' PM markers |
    | Active task markers | `<cwd>/.claude/active-task-*.txt` | all sessions' active-task markers |
    | Coach session markers | `<cwd>/.claude/coach-session-*.txt` | all sessions' coach markers |
+   | Product session markers | `<cwd>/.claude/prod-session-*.txt` | all sessions' product markers |
    | Worker session-id markers | `<cwd>/.claude/worker-session-id-*.txt` | session-id gate paired with active-task markers |
 
    ### Posture markers (legacy unscoped — backward compatibility)
@@ -60,6 +62,7 @@ This prevents accidentally wiping global state if `/cleantime` is run somewhere 
    | Legacy PM session marker | `<cwd>/.claude/pm-session.txt` | single file; pre-shortId convention |
    | Legacy active task marker | `<cwd>/.claude/active-task.txt` | single file |
    | Legacy coach session marker | `<cwd>/.claude/coach-session.txt` | single file |
+   | Legacy product session marker | `<cwd>/.claude/prod-session.txt` | single file |
    | Legacy worker session-id marker | `<cwd>/.claude/worker-session-id.txt` | single file |
 
    ### Non-marker state
@@ -84,8 +87,9 @@ This prevents accidentally wiping global state if `/cleantime` is run somewhere 
    - PM session markers (scoped):       <N>
    - Active task markers (scoped):      <N>
    - Coach session markers (scoped):    <N>
+   - Product session markers (scoped):  <N>
    - Worker session-id markers (scoped):<N>
-   - Legacy unscoped markers:           <N>  (pm-session.txt + active-task.txt + coach-session.txt + worker-session-id.txt)
+   - Legacy unscoped markers:           <N>  (pm-session.txt + active-task.txt + coach-session.txt + prod-session.txt + worker-session-id.txt)
    - Worker notes:                      <deleted|absent>
    - Worker note archives:              <N>
    - Inbox handoff pointers:            <N>
@@ -100,7 +104,7 @@ This prevents accidentally wiping global state if `/cleantime` is run somewhere 
 
 ## Why both scoped and unscoped variants
 
-The marker convention changed on 2026-05-28 from unscoped (`pm-session.txt`) to shortId-scoped (`pm-session-<shortId>.txt`). The open-side skills (`/teamtime`, `/worktime`, `/chosetime`, `/coachtime`) now only write scoped markers, and the close-side skills (`/sleeptime`, `/clocktime`, `/coachout`) only clear THIS session's scoped marker. That leaves two failure modes `/cleantime` must catch:
+The marker convention changed on 2026-05-28 from unscoped (`pm-session.txt`) to shortId-scoped (`pm-session-<shortId>.txt`). The open-side skills (`/teamtime`, `/worktime`, `/chosetime`, `/coachtime`, `/prodtime`) now only write scoped markers, and the close-side skills (`/sleeptime`, `/clocktime`, `/coachout`) only clear THIS session's scoped marker. That leaves two failure modes `/cleantime` must catch:
 
 - **Stale legacy markers** from before the convention change. Any project that hadn't yet exercised the new skills since the change may still have unscoped files lying around.
 - **Stale scoped markers** from sessions that crashed without their close ritual. Each lingering `pm-session-aaaa1111.txt` represents a session that never `/sleeptime`d.
