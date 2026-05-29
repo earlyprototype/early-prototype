@@ -1,7 +1,7 @@
 ---
 name: cleantime
 description: |
-  Aggressive wipe of all PM/Worker/Coach state in the current project. Globs
+  Aggressive wipe of all session state in the current project. Globs
   and deletes all shortId-scoped marker variants
   (`<cwd>/.claude/pm-session-*.txt`, `active-task-*.txt`, `coach-session-*.txt`,
   `prod-session-*.txt`, `worker-session-id-*.txt`) PLUS the legacy unscoped
@@ -20,7 +20,7 @@ description: |
 
 # Cleantime
 
-Aggressive wipe of all PM / Worker / Coach state in this project. No MCP calls, no GitHub sync, no kanban touches — just delete the state files and report what was cleaned. Wipes all shortId-scoped marker variants in a single invocation, regardless of how many concurrent sessions may have written markers in this cwd.
+Aggressive wipe of all session state in this project. No MCP calls, no GitHub sync, no kanban touches — just delete the state files and report what was cleaned. Wipes all shortId-scoped marker variants in a single invocation, regardless of how many concurrent sessions may have written markers in this cwd.
 
 ## Tool conventions for this skill
 
@@ -35,7 +35,7 @@ Non-negotiable — violating them triggers the auto-mode classifier and can brea
 `<cwd>/.claude/` must exist. Check via `Glob` on `<cwd>/.claude/*` (or any equivalent that doesn't shell out). If absent, abort with:
 
 ```
-No .claude/ directory in this cwd. /cleantime is for projects with PM/Worker/Coach state.
+No .claude/ directory in this cwd. /cleantime is for projects with session state.
 If you ran this in the wrong cwd, change directory and re-invoke.
 ```
 
@@ -104,7 +104,7 @@ This prevents accidentally wiping global state if `/cleantime` is run somewhere 
 
 ## Why both scoped and unscoped variants
 
-The marker convention changed on 2026-05-28 from unscoped (`pm-session.txt`) to shortId-scoped (`pm-session-<shortId>.txt`). The open-side skills (`/teamtime`, `/worktime`, `/chosetime`, `/coachtime`, `/prodtime`) now only write scoped markers, and the close-side skills (`/sleeptime`, `/clocktime`, `/coachout`) only clear THIS session's scoped marker. That leaves two failure modes `/cleantime` must catch:
+The marker convention changed on 2026-05-28 from unscoped (`pm-session.txt`) to shortId-scoped (`pm-session-<shortId>.txt`). The open-side skills (`/teamtime`, `/worktime`, `/chosetime`, `/prodtime`) now only write scoped markers, and the close-side skills (`/sleeptime`, `/clocktime`) only clear THIS session's scoped marker. That leaves two failure modes `/cleantime` must catch:
 
 - **Stale legacy markers** from before the convention change. Any project that hadn't yet exercised the new skills since the change may still have unscoped files lying around.
 - **Stale scoped markers** from sessions that crashed without their close ritual. Each lingering `pm-session-aaaa1111.txt` represents a session that never `/sleeptime`d.
@@ -124,18 +124,17 @@ The marker convention changed on 2026-05-28 from unscoped (`pm-session.txt`) to 
 ## When to use
 
 - **Test setup** — between live runs of the lifecycle, when you want a known-clean starting point without ceremoniously stepping through `/clocktime` + `/sleeptime` + `/coachout` for every active session.
-- **Recovery** — when PM/Worker/Coach state is in a confused or contradictory configuration (orphan markers from crashed sessions, mismatched scoped vs unscoped, race-condition artefacts) and ceremonious close-out would be more friction than value.
+- **Recovery** — when session state is in a confused or contradictory configuration (orphan markers from crashed sessions, mismatched scoped vs unscoped, race-condition artefacts) and ceremonious close-out would be more friction than value.
 - **Reset** — when you want to discard everything in this project's posture state and start over from scratch.
 - **Migration** — after pulling the 2026-05-28 marker-convention changes for the first time in an old project, `/cleantime` wipes both legacy and scoped artefacts so the next `/teamtime` runs against a clean slate.
 
 Not for:
 - Routine task closure → use `/clocktime` (preserves notes, advances kanban, syncs to GitHub).
 - Routine session end → use `/sleeptime` (writes session log, prompts for decisions / open items).
-- Routine coach end → use `/coachout` (no log, just clears the marker).
 - Anything where the kanban state matters → handle the kanban first via PM-side MCP calls, then `/cleantime` for filesystem.
 
 ## Related
 
-- Sister skills: `/teamtime` (open PM session), `/worktime` (open Worker task), `/notetime` (mid-task note), `/clocktime` (close Worker task — ceremonious), `/sleeptime` (close PM session — ceremonious), `/coachtime` (open coach session), `/coachout` (close coach session — ceremonious), `/check-handoffs` (manual PM inbox surface)
+- Sister skills: `/teamtime` (open PM session), `/worktime` (open Worker task), `/notetime` (mid-task note), `/clocktime` (close Worker task — ceremonious), `/sleeptime` (close PM session — ceremonious), `/check-handoffs` (manual PM inbox surface)
 - After `/cleantime`, the natural next move is `/teamtime` to open a fresh PM session
 - Front-door doc: `~/Desktop/AI/EverythingCC/_teamtime/Worker-PM-System.md`
