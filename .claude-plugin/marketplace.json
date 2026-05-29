@@ -9,16 +9,16 @@
     {
       "name": "early-prototype",
       "source": "./plugins/early-prototype",
-      "description": "PM / Worker / Coach session-lifecycle suite — the timeteam skills, hooks, and agent that turn Claude Code sessions into auditable role-based work cycles.",
-      "version": "0.1.0",
+      "description": "Product / PM / Worker session-lifecycle suite — the timeteam skills, hooks, and agent that turn Claude Code sessions into auditable role-based work cycles.",
+      "version": "0.2.0",
       "category": "productivity",
       "keywords": [
         "timeteam",
         "session-lifecycle",
         "kanban",
+        "product",
         "pm",
         "worker",
-        "coach",
         "handoffs",
         "adhd-scaffolding"
       ]
