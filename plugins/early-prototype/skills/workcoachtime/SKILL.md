@@ -5,7 +5,7 @@ description: |
   of /coachtime. Same Coach-SOP persona and on-demand tool-recognition
   behaviour, plus four Work-specific moves: (i) checks that today's daily
   worker folder exists at `<cwd>/<DD_MM_YY>` and reminds Thom to create it
-  if absent, (ii) aggregates the coach-history log across all daily folders
+  if absent, (ii) aggregates the workcoach-history log across all daily folders
   under `_daily\` for a multi-day work view, (iii) surfaces the work tracker
   at `_daily\_kanban.md` (a kanbanger-format kanban whose rows are MULTI-DAY
   WORK THREADS — not repos, not single tasks — e.g. "ship workcoachtime",
@@ -70,9 +70,9 @@ On invocation the workcoach reads and adopts, in order:
 
 2. **`C:\Users\Fab2\Desktop\AI\EverythingCC\Coaching\coachtime-context.md`** — Thom's standing context (north star, tenets, stack, ~68-skill pool).
 
-3. **Multi-day work history** — glob `<cwd>/**/.claude/coach-history.jsonl` (matches `_daily\.claude\` AND every `_daily\<DD_MM_YY>\.claude\`). Aggregate to see the cross-day work view: every tool/skill Thom has run across all his work sessions. Use it to ground recommendations and to inform the morning brief (Step 5).
+3. **Multi-day work history** — glob `<cwd>/**/.claude/workcoach-history.jsonl` (matches `_daily\.claude\` AND every `_daily\<DD_MM_YY>\.claude\`). Aggregate to see the cross-day work view: every tool/skill Thom has run across all his work sessions. Use it to ground recommendations and to inform the morning brief (Step 5).
 
-   **Also load the most recent intent** — glob `<cwd>/**/.claude/coach-intent.txt`, pick the latest timestamped entry across all. Parrot it back to hold Thom to it.
+   **Also load the most recent intent** — glob `<cwd>/**/.claude/workcoach-intent.txt`, pick the latest timestamped entry across all. Parrot it back to hold Thom to it.
 
 4. **The work tracker** — `<cwd>/_kanban.md` (i.e. `_daily\_kanban.md`). This is the **multi-day work tracker**: each row is a work thread spanning sessions, **not** a repo and **not** a single-sitting task.
 
@@ -183,12 +183,13 @@ The workcoach now answers tool questions **on demand**.
 - It does **not** open a PM or Worker session. That's `/teamtime` / `/worktime`, which run inside `_daily\<DD_MM_YY>\` and operate on the session kanban (one tier below the tracker).
 - It does **not** write to the session kanban (`_daily\<DD_MM_YY>\_kanban.md`). Only `/teamtime` + `/queuetime` + `/worktime` + `/clocktime` write there. Workcoach writes the morning brief (advisory file), not the kanban.
 - It does **not** auto-sync the work tracker to GitHub. `mcp__kanbanger__sync_to_github` works natively from this session (MCP workspace = `_daily\`), but Thom triggers it deliberately.
-- It does **not** proactively watch or interrupt mid-session. The background hooks (`coach-history-mirror`, `coach-intent-capture`) are silent loggers.
+- It does **not** proactively watch or interrupt mid-session. The background hooks (`workcoach-history-mirror`, `workcoach-intent-capture`) are silent loggers.
 - It does **not** create today's worker folder. Just reminds.
 - It does **not** build hooks.
 
 ## Related
 
+- **Self-contained telemetry**: this skill's history and intent come from the early-prototype suite's own `workcoach-history-mirror` and `workcoach-intent-capture` hooks (writing `workcoach-history.jsonl` / `workcoach-intent.txt`). It does **NOT** require the separate coachtime plugin to be installed.
 - **Personal counterpart**: `/coachtime` — same persona, no daily-folder logic, no work tracker.
 - **PM counterpart**: `/teamtime` — different posture (review/decide/delegate); runs inside `_daily\<DD_MM_YY>\` and consumes workcoach's morning brief.
 - **Worker rituals**: `/worktime`, `/clocktime`, `/notetime`, `/queuetime`, `/chosetime` — all operate inside `_daily\<DD_MM_YY>\` on the session kanban.
