@@ -56,11 +56,7 @@ early-prototype/                      (this repo = the marketplace)
         │   ├── hooks.json            # hook registration
         │   ├── worker-completion-signal.js   (Stop)
         │   ├── pm-handoff-discovery.js        (SessionStart)
-        │   ├── coach-drift-flag.js            (PreToolUse)
-        │   ├── coach-intent-capture.js        (SessionStart + UserPromptSubmit)
-        │   ├── coach-history-mirror.js        (PostToolUse)
-        │   ├── lib/                  # shared modules (handoff template, kanban mover)
-        │   └── tests/                # hook unit tests
+        │   └── lib/                  # shared modules (handoff template, kanban mover)
         └── agents/
             └── kanban-worker.md      # Haiku subagent for kanban MCP grunt
 ```
