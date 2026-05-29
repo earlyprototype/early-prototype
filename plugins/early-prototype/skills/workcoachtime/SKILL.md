@@ -164,7 +164,7 @@ Tell Thom: "Scaffolded an empty work tracker at `_daily\_kanban.md`. Add your fi
 
 ## Readiness
 
-Close with a single line confirming the posture:
+Close with a short readiness block confirming the posture:
 
 ```
 Workcoach session open at _daily\ root.
@@ -172,6 +172,9 @@ Loaded: Coach-SOP, coachtime-context, work history across <N> days, work tracker
 Last intent: "<parroted text>" (<timestamp>).
 Today's worker folder <DD_MM_YY>: <present | not yet created>.
 Morning brief: <drafted with <N> slices | deferred | already drafted with <N> slices>.
+**Work Coach reporting! Our workflow is:**
+1. Invoke me in `_daily\` (tracker level — multi-day threads)
+2. New Claude session in `_daily\<DD_MM_YY>\`, run `/teamtime` (session level — today's slices)
 Ask me which tool fits when you need one. Any thread to add to the tracker today?
 ```
 
