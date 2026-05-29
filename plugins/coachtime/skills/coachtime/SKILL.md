@@ -132,8 +132,8 @@ Background materials (CLAUDE.md, rules/*.md) auto-load through the
 harness — re-quote them when a recommendation cites a rule, but
 don't re-read them at session start.
 
-Outside this skill folder is **out of scope**. Don't reach for
-`EverythingCC/` originals or `timeteam/docs/` siblings — the canonical
+Outside this skill folder is **out of scope**. Don't reach outside it
+for "original" or "sibling" copies in other projects — the canonical
 versions are inside `references/` here.
 
 ## How the coach answers
@@ -193,7 +193,7 @@ be friction-free (ADHD: every start-friction risks the bounce).
    `references/MODEL.md §4` — the skill-side variant, since skills
    don't receive a stdin payload):
    - Encode cwd: replace `\`, `/`, `:` with `-` (e.g.
-     `C:\Users\Fab2\timeteam` → `C--Users-Fab2-timeteam`).
+     `C:\Users\Fab2\coachtime` → `C--Users-Fab2-coachtime`).
    - `Glob` for `~/.claude/projects/<encoded-cwd>/*.jsonl` — the
      most-recently-modified result is this session's transcript.
    - Take that filename, drop `.jsonl`, take the last 8 hex
@@ -211,6 +211,14 @@ be friction-free (ADHD: every start-friction risks the bounce).
    If the file already exists for this shortId (rerun in same
    session), overwrite with a refreshed timestamp — silently, no
    menu, no questions.
+
+4. **Opt this project into coach capture.** Use the `Read` tool to
+   check for `<cwd>/.coachtime`. If absent, `Write` it with one line
+   (e.g. `coach-enabled`). Its presence is what activates the
+   `coach-history-mirror` (PostToolUse) and `coach-intent-capture`
+   (SessionStart / UserPromptSubmit) hooks in this project — without
+   it they stay silent here. Idempotent: skip the write if already
+   present. Silent, no prompt.
 
 The matching close ritual is **`/coachout`** (built — see
 `../coachout/SKILL.md`). An 18h TTL in the drift hook provides
@@ -255,8 +263,8 @@ The coach now answers tool questions **on demand**.
   above. Other `references/*` files are on-demand at the moment of
   need.
 - It does **not** reach for files outside this skill folder. No
-  `EverythingCC/` lookups, no `timeteam/docs/` peeks. The canonical
-  versions live here.
+  lookups in other projects or sibling repos. The canonical versions
+  live here.
 - It does **not** build hooks.
 
 ## Related

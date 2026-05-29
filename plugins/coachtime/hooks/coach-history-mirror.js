@@ -21,6 +21,13 @@
  * it lives in a hook (per CLAUDE.md: determinism for capture, probabilism for
  * reasoning).
  *
+ * Coach-aware (added 2026-05-28): only mirrors when the cwd is a coach-enabled
+ * project — i.e. a `.coachtime` marker file exists at the project root. Silent
+ * (no coach-history.jsonl) in any other cwd, so the user-level PostToolUse
+ * registration no longer drops capture files into every project touched. The
+ * project marker (not the per-session coach-session-<shortId>.txt marker) is
+ * used so capture is broad across coach-enabled projects.
+ *
  * Per-project: writes to the cwd's .claude/, never a global path.
  * Async, never blocks, always exits 0.
  *
@@ -38,6 +45,7 @@ const MAX_STDIN = 1024 * 1024;
 const STDIN_TIMEOUT_MS = 3000;
 const INPUT_SUMMARY_MAX = 500;
 const HISTORY_FILENAME = 'coach-history.jsonl';
+const PROJECT_MARKER = '.coachtime';
 const TAG = '[Coach-History-Mirror]';
 
 // ---------- stdin (mirrors worker-completion-signal.js 41-58) ----------
@@ -97,6 +105,18 @@ function summariseInput(toolInput) {
   return truncate(str, INPUT_SUMMARY_MAX);
 }
 
+// Coach-aware gate: coach is "enabled" in a cwd when a `.coachtime` marker file
+// exists at the project root. Persistent (install-time / hand-created) signal,
+// available even before any per-session marker. When absent, this hook captures
+// nothing — keeping coach-history.jsonl out of non-coach projects.
+function coachProjectEnabled(cwd) {
+  try {
+    return fs.statSync(path.join(cwd, PROJECT_MARKER)).isFile();
+  } catch (_) {
+    return false;
+  }
+}
+
 // Skill / slash-command name lives in tool_input.skill for Skill invocations.
 // Only populate `skill` for actual Skill-shaped tools — NOT for Bash (whose
 // tool_input.command would otherwise be misread as a skill name). The Skill
@@ -127,6 +147,11 @@ function main() {
   const cwd = (typeof input.cwd === 'string' && input.cwd.length > 0)
     ? input.cwd
     : process.cwd();
+
+  // Coach-aware: silent unless this cwd is a coach-enabled project.
+  if (!coachProjectEnabled(cwd)) {
+    process.exit(0);
+  }
 
   const toolName = input.tool_name || input.tool || 'unknown';
   const toolInput = input.tool_input || input.input || {};

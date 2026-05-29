@@ -1,5 +1,5 @@
 {
-  "description": "coachtime plugin hooks — the ambient backstops for coach sessions. coach-intent-capture records what Thom said he was about to do (SessionStart) and his latest prompt intent (UserPromptSubmit); coach-history-mirror logs every tool/skill invocation to coach-history.jsonl (PostToolUse); coach-drift-flag keeps a coach session off implementation edits (PreToolUse on edit tools).",
+  "description": "coachtime (coach) hooks. Capture hooks — history mirror (PostToolUse) + intent capture (SessionStart/UserPromptSubmit) — gate on a `.coachtime` project marker. The drift flag (PreToolUse) gates on the per-session coach-session-<shortId>.txt marker. NO PM/Worker hooks here — worker-completion-signal and pm-handoff-discovery ship with the early-prototype suite plugin.",
   "hooks": {
     "SessionStart": [
       {

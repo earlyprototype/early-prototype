@@ -27,7 +27,7 @@
       "name": "coachtime",
       "source": "./plugins/coachtime",
       "description": "Coach session layer — the on-demand mentor that helps you recognise and pick the right Claude Code tool at the moment you need it. Pull-primary, never nags. Self-contained skill with persona, standing context, and reference guides.",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "category": "productivity",
       "keywords": [
         "coach",

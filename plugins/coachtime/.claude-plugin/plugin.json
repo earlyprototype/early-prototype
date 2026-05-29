@@ -1,7 +1,7 @@
 {
   "name": "coachtime",
-  "version": "0.1.0",
-  "description": "Coach session layer — the on-demand mentor that helps you recognise and pick the right Claude Code tool at the moment you need it. Self-contained skill bundling the coach persona, standing context, and reference guides. Pull-primary: answers tool questions on demand, never nags. Skill invokes as coachtime:coachtime.",
+  "version": "0.2.0",
+  "description": "Coach — the ECC mentor layer. A pull-primary tool-recognition coach that names the right Claude Code tool (and what it does) the moment you ask, grounded in a curated pool and your per-project history. Mentor peer to the timeteam suite; ships independently. Skills invoke as coachtime:<name>.",
   "author": {
     "name": "Thom Conaty",
     "email": "thomconatydesign@gmail.com"
@@ -12,7 +12,8 @@
     "coach",
     "mentor",
     "tool-recognition",
+    "skill-picker",
     "adhd-scaffolding",
-    "session-lifecycle"
+    "claude-code"
   ]
 }

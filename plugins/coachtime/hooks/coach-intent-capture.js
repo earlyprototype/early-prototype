@@ -21,6 +21,14 @@
  * coach-intent.txt ("<!-- session:<uuid> -->") makes "first message of THIS
  * session" idempotent across multiple UserPromptSubmit fires.
  *
+ * Coach-aware (added 2026-05-28): only operates when the cwd is a coach-enabled
+ * project — i.e. a `.coachtime` marker file exists at the project root. In any
+ * other cwd both modes go silent (start emits empty additionalContext; prompt
+ * captures nothing), so this user-level SessionStart/UserPromptSubmit
+ * registration no longer drops coach-intent.txt or surfaces the intent prompt
+ * in every project. The project marker (not the per-session coach-session
+ * marker) is used because both modes fire before any session marker exists.
+ *
  * Per-project: <cwd>/.claude/, never a global path. Exits 0 always, never blocks.
  *
  * Patterns mirrored from:
@@ -41,6 +49,7 @@ const INTENT_FILENAME = 'coach-intent.txt';
 const INTENT_TEXT_MAX = 1000;
 const TAG = '[Coach-Intent]';
 const START_PROMPT = 'What are you about to do this session?';
+const PROJECT_MARKER = '.coachtime';
 
 // ---------- stdin (mirrors worker-completion-signal.js 41-58) ----------
 let stdinData = '';
@@ -87,6 +96,18 @@ function isoTimestamp() {
 
 function readFileSafe(p) {
   try { return fs.readFileSync(p, 'utf8'); } catch { return null; }
+}
+
+// Coach-aware gate: coach is "enabled" in a cwd when a `.coachtime` marker file
+// exists at the project root. Persistent signal, available at SessionStart and
+// first UserPromptSubmit (before any per-session marker exists), which is why
+// both modes gate on it. Absent -> hook stays silent in that cwd.
+function coachProjectEnabled(cwd) {
+  try {
+    return fs.statSync(path.join(cwd, PROJECT_MARKER)).isFile();
+  } catch (_) {
+    return false;
+  }
 }
 
 // Session UUID: transcript filename first (most reliable across fires), then
@@ -169,9 +190,15 @@ function runPromptMode(input) {
   const sentinel = sessionSentinel(sessionId);
 
   const existing = readFileSafe(intentPath) || '';
+  // Without a stable session identity we can't tell "first message of this
+  // session" from later ones -> skip rather than append a new intent on every
+  // prompt (which would grow coach-intent.txt unbounded).
+  if (sessionId === 'nosessid') {
+    process.exit(0);
+  }
   // Intent already captured for THIS session -> do nothing (only the FIRST
   // user message of the session becomes the intent).
-  if (sessionId !== 'nosessid' && existing.includes(sentinel)) {
+  if (existing.includes(sentinel)) {
     process.exit(0);
   }
 
@@ -221,7 +248,15 @@ function main() {
   try {
     input = JSON.parse(stdinData || '{}');
   } catch (_) {
-    return safeExit(mode, mode === 'start' ? START_PROMPT : '');
+    // Malformed stdin: can't determine the project -> stay silent rather than
+    // surfacing the intent prompt in an unknown cwd.
+    return safeExit(mode, '');
+  }
+
+  // Coach-aware: only operate in coach-enabled projects (.coachtime present).
+  // Silent everywhere else (start -> empty additionalContext, prompt -> exit).
+  if (!coachProjectEnabled(getCwd(input))) {
+    return safeExit(mode, '');
   }
 
   if (mode === 'start') {
