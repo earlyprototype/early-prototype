@@ -1,6 +1,6 @@
 {
   "name": "early-prototype",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Product / PM / Worker session-lifecycle suite. Skills for opening, queuing, and closing role-based work sessions; hooks for handoff generation; an agent for kanban mutations. Skills invoke as early-prototype:<name>.",
   "author": {
     "name": "Thom Conaty",
