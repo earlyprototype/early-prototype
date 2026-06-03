@@ -63,7 +63,7 @@ If you want to switch into the planning seat after closing the product session, 
 ## What this skill does NOT do
 
 - It does **not** write a session log. Unlike `/sleeptime`, there's no equivalent "decisions made / handoffs reviewed" output for product work — the durable artifacts of a cycle are the written brief and capability contract at the project root (`PRODUCT-BRIEF.md`, `PRODUCT.md`), not a narrative close-out summary.
-- It does **not** touch the kanban board or its MCP. Product has no kanban entries of its own.
+- It does **not** tear down, archive, or disconnect the kanban board. The board (`_kanban.md`) is a permanent project artifact — `/prodtime` connects to it at open (through the Haiku `kanban-worker`), and closing the Product session simply leaves it live and untouched. Product still creates no task entries of its own; those belong to the project-planning seat.
 - It does **not** touch OTHER sessions' product session markers. Each session manages its own close-out. Use `/cleantime` for cross-session cleanup.
 - It does **not** end any other seat's session (planning via `/sleeptime`, worker via `/clocktime`, mentor via `/coachout`). One verb, one job.
 

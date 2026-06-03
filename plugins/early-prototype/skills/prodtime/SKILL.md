@@ -8,8 +8,10 @@ description: |
   does NOT write code), loads its standing context (the goal, the principles it
   holds, the specialist helpers it can call, and where its written plan lands),
   surfaces any existing product plan or brief in this folder so the session
-  continues rather than restarts, and quietly records that a product session
-  opened. Use at the start of a session where you want to shape what to build
+  continues rather than restarts, connects the project's kanban board through
+  the Kanbanger MCP (joining the existing board or starting a new one) and keeps
+  it tended by a parallel Haiku worker, and quietly records that a product
+  session opened. Use at the start of a session where you want to shape what to build
   this cycle before any planning or coding begins — it sits one level above the
   project-planning session that `/teamtime` opens. Friction-free: no prompt, no
   menu. Top of the work hierarchy (the personal mentor that `/coachtime` opens
@@ -62,6 +64,14 @@ Before opening, check the project root for an in-flight cycle so the session **c
 - **`<cwd>/PRODUCT-BRIEF.md`** — the earlier diagnostic brief, if present. Use the `Read` tool; absent is fine.
 
 If either exists, read it and pick the cycle up where it left off. If neither exists, this is a fresh cycle — start from the diagnostic.
+
+## Connect the kanban board
+
+Every seat in the work hierarchy keeps the project's kanban board live — Product included. On open, **the Product LLM invokes the Kanbanger MCP directly** to connect the board: a `list_tasks` call (the `mcp__kanbanger__*` tools, run in this session — not handed off). The MCP resolves this project's workspace and either joins the existing board or starts a new one, so you never hand-create or initialise `_kanban.md` — the call does it. Read the returned state for awareness of what is already in flight before framing a new cycle.
+
+**Haiku does the grunt work, not the framing.** The Product LLM makes the connect call and reads the board itself; any repetitive board churn after that — adding, moving, updating, or syncing task entries — is dispatched to the `kanban-worker` subagent (Haiku 4.5, the same worker the PM lifecycle uses), so it stays cheap and off the Product session's context.
+
+This does not widen Product's lane: connecting and reading the board is for awareness only — Product still writes no task entries of its own (breaking a cycle into tasks is the project-planning seat's job, downstream). If the Kanbanger MCP isn't configured in this project, the connect call will error — note that in one line and continue (framing a cycle doesn't depend on the board), and point the user at `/teamtime`'s install guidance if they want it wired up.
 
 ## Session marker
 
