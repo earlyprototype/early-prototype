@@ -2,8 +2,9 @@
 name: teamtime
 description: |
   Session-entry ritual. Opens a PM session: instantiates the PM persona
-  (review, decide, delegate, hold scope), ensures comms folders exist, and
-  surfaces unread Worker handoffs from the inbox. Writes
+  (review, decide, delegate, hold scope), ensures comms folders exist,
+  surfaces unread Worker handoffs from the inbox, and adopts the workcoach
+  morning brief if present (offering to queue its slices). Writes
   `<cwd>/.claude/pm-session-<shortId>.txt` as the PM session marker
   (shortId-scoped so two concurrent Claude instances at the same cwd don't
   collide). Use at the start of any work session — PM is the default posture,
@@ -124,7 +125,29 @@ These are non-negotiable — violating them triggers the auto-mode classifier an
 
    **Continue with PM session open regardless.** Do NOT abort the skill — the user might want to plan / review the inbox before installing, or might be testing the skill in a non-kanban project. The guidance is informational, not blocking. Continue to step 5.
 
-5. **Invoke PM persona posture statement.** Output this block to the user verbatim, substituting the session description:
+5. **Adopt the workcoach morning brief, if present.** `/workcoachtime` drafts a morning brief at `<cwd>/.claude/morning-brief.md` proposing today's task slices for PM to adopt — the handoff that turns the multi-day work tracker into today's session queue. Read it with the `Read` tool (per the conventions above — don't Bash-probe):
+
+   - **Absent** → skip silently and continue to step 6. Most projects have no brief; it exists only in a workcoach-driven `_daily\<DD_MM_YY>\` session.
+   - **Present** → list the slices under `## Proposed slices for today` as a numbered list, then offer to queue them (wait for the user's pick — this is the human gate):
+
+   ```
+   Workcoach left a morning brief — N proposed slices:
+     1. <slice text>
+     2. <slice text>
+   Queue which into today's kanban? ("all" / "1 and 3" / "none")
+   ```
+
+   Queue **only** the slices the user names, each title **verbatim** from the brief (the actionable text before the `— from thread …` note); never reword or invent one. Adopting user-selected brief slices is the sanctioned handoff — it's why `/queuetime`'s type-it-yourself rule doesn't block here: the user is explicitly approving each title.
+
+   **To queue**, dispatch to the Haiku `kanban-worker` subagent via the `Task` tool (`subagent_type: "kanban-worker"`) — the same path `/queuetime` uses; do **not** call `mcp__kanbanger__*` directly from this session. Batch the picks into one instruction, default column `TODO`:
+
+   ```
+   add_task(title="<slice 1>", column="TODO"); add_task(title="<slice 2>", column="TODO"); sync_to_github()
+   ```
+
+   Parse the worker's `OK:` / `ERR <code>:` lines. If kanbanger wasn't detected in step 4, skip the queue — show the slices for reference and note that queuing needs kanbanger wired up first. On success, confirm `Queued M slice(s) → TODO — pick them up with /chosetime.` Leave the brief file in place (advisory record); adopting it doesn't delete it.
+
+6. **Invoke PM persona posture statement.** Output this block to the user verbatim, substituting the session description:
 
    ```
    PM session open: <session description>.
@@ -133,7 +156,7 @@ These are non-negotiable — violating them triggers the auto-mode classifier an
    To close this PM session, run /sleeptime.
    ```
 
-6. **Surface inbox.** Run the discovery script (same logic as `/check-handoffs`):
+7. **Surface inbox.** Run the discovery script (same logic as `/check-handoffs`):
 
    ```
    node "C:\Users\Fab2\.claude\hooks\pm-handoff-discovery.js" < /dev/null
@@ -141,7 +164,7 @@ These are non-negotiable — violating them triggers the auto-mode classifier an
 
    Parse the JSON envelope's `additionalContext` field and present unread handoffs as a markdown listing. If the listing is empty, say "No unread handoffs."
 
-7. **Confirm.** Single closing line:
+8. **Confirm.** Single closing line:
 
    ```
    PM session ready. Inbox: N unread.
@@ -160,7 +183,7 @@ If the user is doing direct PM-shaped work without `/worktime` (review notes, de
 ## What this skill does NOT do
 
 - It does **not** write `active-task.txt`. That's `/worktime`'s job. Without it, the Stop hook stays silent.
-- It does **not** add anything to `_kanban.md`. PM doesn't have a kanban entry; only Worker tasks do.
+- It does **not** create a kanban entry for the PM session itself — PM holds no task of its own. (It *can* queue Worker tasks to `## TODO` when you adopt the workcoach morning brief in step 5, but those are Worker tasks, picked up via `/chosetime` — not a PM entry.)
 - It does **not** mark inbox pointers as PM:READ. That's a separate manual edit (or a future `/marktime` skill).
 - It does **not** close any open Worker task. If you walk into a stale `active-task.txt`, decide what to do explicitly (`/clocktime` or carry forward).
 

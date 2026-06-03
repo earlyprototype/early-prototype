@@ -10,7 +10,7 @@
       "name": "early-prototype",
       "source": "./plugins/early-prototype",
       "description": "Product / PM / Worker session-lifecycle suite — the timeteam skills, hooks, and agent that turn Claude Code sessions into auditable role-based work cycles.",
-      "version": "0.2.2",
+      "version": "0.2.3",
       "category": "productivity",
       "keywords": [
         "timeteam",
