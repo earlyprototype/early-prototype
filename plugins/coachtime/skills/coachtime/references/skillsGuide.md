@@ -2,7 +2,7 @@
 
 Generated 2026-05-20. The ~43 skills you actually reach for, grouped by the seat/hat model. Scan this; fall back to `SKILLS-DEPLOY-INDEX-v3.md` (full 291-entry library) only when nothing here fits.
 
-Derived from the user-level carve-out (`~/.claude/skills/`, 40) minus 2 trims, plus 5 promotes. ⬆ = promoted from library this curation. Promotes are not yet installed to `~/.claude/skills/` — see "To apply" at the bottom.
+Derived from the user-level carve-out (`~/.claude/skills/`, 40) minus 2 trims, plus 5 promotes. ⬆ = promoted from library this curation. **Installed 2026-06-09** (4 as `~/.claude/skills/` folders; `hookify` ships as the ecc plugin command `/hookify`, not a folder) — see "Applied" at the bottom.
 
 ---
 
@@ -66,18 +66,19 @@ Derived from the user-level carve-out (`~/.claude/skills/`, 40) minus 2 trims, p
 - **gateguard** ⬆ — ambient fact-forcing gate before edit/write/bash
 
 ## Ambient / ship
-- **hookify** ⬆ — turn a repeated correction into an ambient hook
+- **hookify** ⬆ — turn a repeated correction into an ambient hook. Available as the ecc plugin command `/hookify` (not a `~/.claude/skills/` folder).
 - **opensource-pipeline** ⬆ — fork → sanitise → package a repo for public release
 
 ---
 
-## Trimmed from the carve-out
-- **jpa-patterns** — Java/Hibernate; no evidence you do Java
-- **clickhouse-io** — ClickHouse OLAP; no evidence you use it
+## Trimmed from the carve-out (removed 2026-06-09)
+- **jpa-patterns** — Java/Hibernate; no evidence you do Java. Removed; still available as `ecc:jpa-patterns`.
+- **clickhouse-io** — ClickHouse OLAP; no evidence you use it. Removed; still available as `ecc:clickhouse-io`.
 
-## To apply (separate explicit step — not yet done)
-- Install the 5 promotes (`mcp-server-patterns`, `codebase-onboarding`, `gateguard`, `hookify`, `opensource-pipeline`) to `~/.claude/skills/` via `/configure-ecc` or manual copy.
-- Remove the 2 trims from `~/.claude/skills/`.
-- This sheet reflects the intended set; the carve-out on disk still has the old 40 until you run the install step.
+## Applied 2026-06-09
+- Installed 4 promotes to `~/.claude/skills/`: `mcp-server-patterns`, `codebase-onboarding`, `gateguard`, `opensource-pipeline`.
+- `hookify` needed no install — it ships as the ecc plugin command `/hookify` (it was never a skill folder).
+- Removed the 2 trims (`jpa-patterns`, `clickhouse-io`) from `~/.claude/skills/`; both remain available as `ecc:` plugin skills.
+- The carve-out on disk now matches the intended set.
 
-_Full library + all facet tags: `SKILLS-DEPLOY-INDEX-v3.md`. Daily count: 43 (40 − 2 + 5)._
+_Full library + all facet tags: `SKILLS-DEPLOY-INDEX-v3.md`. Daily count: 43 working tools = 42 `~/.claude/skills/` folders + `hookify` as `/hookify`. (Note: the 10 PM/Worker lifecycle rituals now ship in the early-prototype plugin, not as loose skill folders — the "40 carve-out" base figure above predates that and is itself due a refresh.)_
