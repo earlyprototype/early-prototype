@@ -2,7 +2,7 @@
 
 A personal [Claude Code](https://code.claude.com) **plugin marketplace**.
 
-Ships two plugins: **`early-prototype`** — the **timeteam** suite (Product/PM/Worker session lifecycle as installable skills, hooks, and an agent) — and **`coachtime`**, a standalone mentor layer installed separately.
+Ships three plugins: **`early-prototype`** — the **timeteam** suite (Product/PM/Worker session lifecycle as installable skills, hooks, and an agent) — **`coachtime`**, a standalone mentor layer installed separately — and **`kanbanger`**, an MCP kanban board with a human REVIEW gate, also installed separately.
 
 ## What it gives you (in 30 seconds)
 

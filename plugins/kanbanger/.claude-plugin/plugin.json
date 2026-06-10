@@ -1,0 +1,33 @@
+{
+  "name": "kanbanger",
+  "version": "3.0.0",
+  "description": "MCP kanban board for mixed human/agent work — agents propose, a REVIEW gate keeps DONE human-approved, optional GitHub Projects sync. Per-project boards in plain markdown (_kanban.md), 11 tools.",
+  "author": {
+    "name": "Thom Conaty",
+    "email": "thomconatydesign@gmail.com"
+  },
+  "homepage": "https://github.com/earlyprototype/kanbanger-partymix",
+  "repository": "https://github.com/earlyprototype/early-prototype",
+  "keywords": [
+    "kanban",
+    "mcp",
+    "tasks",
+    "review-gate",
+    "github-projects",
+    "agents",
+    "claude-code"
+  ],
+  "mcpServers": {
+    "kanbanger": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/earlyprototype/kanbanger-partymix.git",
+        "kanbanger-mcp"
+      ],
+      "env": {
+        "KANBANGER_WORKSPACE": "${CLAUDE_PROJECT_DIR}"
+      }
+    }
+  }
+}
