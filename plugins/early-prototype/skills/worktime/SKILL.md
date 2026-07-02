@@ -69,7 +69,7 @@ Per `~/.claude/rules/performance.md`: Haiku for worker-agent grunt work, Opus/So
 1. **Discover this session's shortId, then check `<cwd>/.claude/active-task-<shortId>.txt`.**
 
    **Discovery** (per `Worker-PM-System.md §10` / timeteam `DESIGN-GUIDELINES.md §2` — the skill-side method):
-   - Encode cwd: replace `\`, `/`, `:` with `-` (e.g. `C:\Users\Fab2\timeteam` → `C--Users-Fab2-timeteam`).
+   - Encode cwd: replace `\`, `/`, `:` with `-` (e.g. `C:\Users\<user>\timeteam` → `C--Users-<user>-timeteam`).
    - `Glob` for `~/.claude/projects/<encoded-cwd>/*.jsonl` — the most-recently-modified result is this session's transcript. The full filename minus `.jsonl` is this session's **full UUID** (saved for step 3a); the last 8 hex characters are the **shortId** (used here and in step 3).
    - **Fallback:** if any step fails, use the literal string `unknown` as the shortId AND skip the full-UUID write in step 3a. Never block Worker open over identity discovery.
 

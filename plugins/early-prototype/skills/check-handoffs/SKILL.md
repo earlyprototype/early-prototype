@@ -30,7 +30,7 @@ shells out to it and presents the rendered text.
    promptly instead of waiting on its 3s stdin timeout:
 
    ```
-   node "C:\Users\Fab2\.claude\hooks\pm-handoff-discovery.js" < /dev/null
+   node ~/.claude/hooks/pm-handoff-discovery.js < /dev/null
    ```
 
    `/dev/null` is the right answer regardless of host OS, because the
@@ -88,7 +88,7 @@ from the pointer.
 
 ## Related
 
-- Front-door doc: `C:\Users\Fab2\Desktop\AI\EverythingCC\_teamtime\Worker-PM-System.md`
-- Stop hook (the writer): `C:\Users\Fab2\.claude\hooks\worker-completion-signal.js`
+- Front-door doc: `~/Desktop/AI/EverythingCC/_teamtime/Worker-PM-System.md`
+- Stop hook (the writer): `~/.claude/hooks/worker-completion-signal.js`
 - Inbox folder: `<cwd>/.claude/inbox/pm/` (per-project; one folder per project root)
-- Historical briefs (do not use as templates): `C:\Users\Fab2\Desktop\AI\EverythingCC\_teamtime\archive\`
+- Historical briefs (do not use as templates): `~/Desktop/AI/EverythingCC/_teamtime/archive/`

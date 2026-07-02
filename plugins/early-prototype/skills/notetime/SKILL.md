@@ -27,7 +27,7 @@ Each note must be stamped with the writing session's **shortId** — the last 8 
 
 **Discovery (do this before composing the entry):**
 
-1. Compute the cwd-encoded subdir name: `<cwd>` with all `\` and `/` and `:` replaced by `-`. E.g. `C:\Users\Fab2\Desktop\AI\junk2\worker-signal-test` → `C--Users-Fab2-Desktop-AI-junk2-worker-signal-test`.
+1. Compute the cwd-encoded subdir name: `<cwd>` with all `\` and `/` and `:` replaced by `-`. E.g. `C:\Users\<user>\Desktop\AI\junk2\worker-signal-test` → `C--Users-<user>-Desktop-AI-junk2-worker-signal-test`.
 2. `Glob` for `~/.claude/projects/<encoded-cwd>/*.jsonl`. The most recently-modified one (top of the Glob result) is the current session's transcript.
 3. Extract the UUID from the filename (it's the full filename minus `.jsonl`). Take the last 8 hex characters → that's the shortId.
 4. If the Glob returns nothing (transcript path not found), use the literal placeholder `unknown` as the shortId — never fail the note write over identity discovery.

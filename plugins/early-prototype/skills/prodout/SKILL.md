@@ -71,5 +71,5 @@ If you want to switch into the planning seat after closing the product session, 
 
 - Companion open ritual: `/prodtime` (writes the marker this skill deletes).
 - Sister close rituals: `/sleeptime` (planning session end), `/clocktime` (worker task end), `/coachout` (mentor session end).
-- Persona source: `C:\Users\Fab2\timeteam\docs\Prod-SOP.md`
-- Standing context: `C:\Users\Fab2\timeteam\docs\prodtime-context.md`
+- Persona source: `~/timeteam/docs/Prod-SOP.md`
+- Standing context: `~/timeteam/docs/prodtime-context.md`

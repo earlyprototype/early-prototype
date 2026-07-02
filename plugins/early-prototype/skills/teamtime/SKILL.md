@@ -31,7 +31,7 @@ These are non-negotiable — violating them triggers the auto-mode classifier an
 1. **Discover this session's shortId, then check `<cwd>/.claude/pm-session-<shortId>.txt`.**
 
    **Discovery** (per `Worker-PM-System.md §10` / timeteam `DESIGN-GUIDELINES.md §2` — the skill-side method, since skills don't receive a stdin payload):
-   - Encode cwd: replace `\`, `/`, `:` with `-` (e.g. `C:\Users\Fab2\timeteam` → `C--Users-Fab2-timeteam`).
+   - Encode cwd: replace `\`, `/`, `:` with `-` (e.g. `C:\Users\<user>\timeteam` → `C--Users-<user>-timeteam`).
    - `Glob` for `~/.claude/projects/<encoded-cwd>/*.jsonl` — the most-recently-modified result is this session's transcript.
    - Take that filename, drop `.jsonl`, take the last 8 hex characters.
    - **Fallback:** if any step fails, use the literal string `unknown` as the shortId. Never block PM session open over identity discovery.
@@ -88,7 +88,7 @@ These are non-negotiable — violating them triggers the auto-mode classifier an
 
    To install (per-project, ~30 seconds):
 
-       python C:\Users\Fab2\Desktop\AI\_tools\kanbanger-partymix\scripts\setup-venv.py
+       python ~/Desktop/AI/_tools/kanbanger-partymix/scripts/setup-venv.py
 
    Run from this project's cwd. The script:
      - creates .venv/ in this project
@@ -159,7 +159,7 @@ These are non-negotiable — violating them triggers the auto-mode classifier an
 7. **Surface inbox.** Run the discovery script (same logic as `/check-handoffs`):
 
    ```
-   node "C:\Users\Fab2\.claude\hooks\pm-handoff-discovery.js" < /dev/null
+   node ~/.claude/hooks/pm-handoff-discovery.js < /dev/null
    ```
 
    Parse the JSON envelope's `additionalContext` field and present unread handoffs as a markdown listing. If the listing is empty, say "No unread handoffs."
