@@ -1,5 +1,5 @@
 {
-  "description": "timeteam (early-prototype) Product/PM/Worker lifecycle hooks. Stop drops handoffs; SessionStart surfaces unread handoffs; PostToolUse + UserPromptSubmit capture lightweight session telemetry (tool history + first-message intent) that /workcoachtime reads.",
+  "description": "timeteam (early-prototype) Product/PM/Worker lifecycle hooks. Stop drops handoffs; SessionStart surfaces unread handoffs.",
   "hooks": {
     "Stop": [
       {
@@ -21,31 +21,6 @@
           {
             "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/pm-handoff-discovery.js\"",
-            "timeout": 5
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/workcoach-history-mirror.js\"",
-            "timeout": 10,
-            "async": true
-          }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/workcoach-intent-capture.js\" prompt",
             "timeout": 5
           }
         ]

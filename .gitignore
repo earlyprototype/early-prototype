@@ -1,4 +1,4 @@
 # Session + telemetry cruft from running the timeteam skills with this repo
-# as cwd (PM session logs, workcoach history/intent). Not part of the
+# as cwd (PM session logs, session telemetry). Not part of the
 # marketplace payload — ignore so it stops surfacing in `git status`.
 .claude/

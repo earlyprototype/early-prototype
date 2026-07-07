@@ -14,7 +14,7 @@ description: |
   session opened. Use at the start of a session where you want to shape what to build
   this cycle before any planning or coding begins — it sits one level above the
   project-planning session that `/teamtime` opens. Friction-free: no prompt, no
-  menu. Top of the work hierarchy (the personal mentor that `/coachtime` opens
+  menu. Top of the work hierarchy (a personal mentor session
   sits outside that hierarchy, not above it).
 ---
 
@@ -22,7 +22,7 @@ description: |
 
 Session-entry for a **product-planning** session. Instantiates the Product persona and loads its standing context so the session can frame what a development cycle should build, for whom, and why — and then hand a written plan down to the project-planning seat. This is the top of the work hierarchy: Product decides *what* is worth building this cycle; the project-planning session coordinates *how* it gets delivered; the worker executes a single task.
 
-This is upstream of `/teamtime` (which opens a project-planning session). They are different postures: Product frames the cycle and writes the plan; the project-planning seat breaks that plan into tasks, runs the board, and manages handoffs. The personal mentor opened by `/coachtime` is *not* part of this chain at all — it sits beside you, helps you learn and pick tools, and directs no building.
+This is upstream of `/teamtime` (which opens a project-planning session). They are different postures: Product frames the cycle and writes the plan; the project-planning seat breaks that plan into tasks, runs the board, and manages handoffs. A personal mentor session is *not* part of this chain at all — it sits beside you, helps you learn and pick tools, and directs no building.
 
 ## When to Use
 
@@ -30,7 +30,7 @@ At the start of a session where you have an idea or a cycle to shape and want to
 
 ## Tool conventions for this skill
 
-Same non-negotiables as `/teamtime` and `/coachtime` — violating them can trip the auto-mode classifier, which then sticks and denies later calls mid-flow:
+Same non-negotiables as `/teamtime` — violating them can trip the auto-mode classifier, which then sticks and denies later calls mid-flow:
 
 - **File existence / content checks → use the `Read` tool.** `Read` returns a structured error if the file is absent (treat absence-error as "Absent"; success as "Present"). Do **NOT** use Bash `test -f`, `[[ -f ... ]]`, `Test-Path`, `Get-Content`, `cat`, `ls`, or any PowerShell-style probe.
 - **Writing new files → use the `Write` tool.** Not Bash `echo > file` or `Set-Content`.
@@ -105,7 +105,7 @@ If an existing `PRODUCT.md` or `PRODUCT-BRIEF.md` was found, add one line naming
 
 - It does **not** coordinate the build or break a cycle into tasks. That's the project-planning seat (`/teamtime`) and the worker (`/worktime`). Product hands over the written brief and lets the planning seat run it.
 - It does **not** implement or write code. If something needs making, it goes down the chain to a worker. Product stays Product.
-- It does **not** act as the personal mentor. "Help me learn" or "which tool do I use" belongs to the session `/coachtime` opens, which sits outside this chain — redirect it.
+- It does **not** act as the personal mentor. "Help me learn" or "which tool do I use" belongs to a mentor session outside this chain — redirect it.
 - It does **not** draft the research, design, or spec inline. Product commissions specialist helpers and assembles their outputs into the plan.
 - It does **not** prompt or show a menu on open — the marker write is silent and friction-free.
 
@@ -113,6 +113,6 @@ If an existing `PRODUCT.md` or `PRODUCT-BRIEF.md` was found, add one line naming
 
 - Downstream seat: `/teamtime` (opens a project-planning session that plans delivery from the brief Product writes; different posture — coordinate/decide/delegate vs. frame what to build).
 - Worker clock-in: `/worktime` (executes a single task inside a project-planning session).
-- Outside the chain: `/coachtime` (the personal mentor that helps you learn and pick tools; not a layer in this hierarchy).
+- Outside the chain: the personal mentor posture (helps you learn and pick tools; not a layer in this hierarchy).
 - Persona source: `~/timeteam/docs/Prod-SOP.md`
 - Standing context: `~/timeteam/docs/prodtime-context.md`

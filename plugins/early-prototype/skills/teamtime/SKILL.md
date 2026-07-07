@@ -3,7 +3,7 @@ name: teamtime
 description: |
   Session-entry ritual. Opens a PM session: instantiates the PM persona
   (review, decide, delegate, hold scope), ensures comms folders exist,
-  surfaces unread Worker handoffs from the inbox, and adopts the workcoach
+  surfaces unread Worker handoffs from the inbox, and adopts the
   morning brief if present (offering to queue its slices). Writes
   `<cwd>/.claude/pm-session-<shortId>.txt` as the PM session marker
   (shortId-scoped so two concurrent Claude instances at the same cwd don't
@@ -125,13 +125,13 @@ These are non-negotiable — violating them triggers the auto-mode classifier an
 
    **Continue with PM session open regardless.** Do NOT abort the skill — the user might want to plan / review the inbox before installing, or might be testing the skill in a non-kanban project. The guidance is informational, not blocking. Continue to step 5.
 
-5. **Adopt the workcoach morning brief, if present.** `/workcoachtime` drafts a morning brief at `<cwd>/.claude/morning-brief.md` proposing today's task slices for PM to adopt — the handoff that turns the multi-day work tracker into today's session queue. Read it with the `Read` tool (per the conventions above — don't Bash-probe):
+5. **Adopt the morning brief, if present.** A planning session may have drafted a morning brief at `<cwd>/.claude/morning-brief.md` proposing today's task slices for PM to adopt — the handoff that turns the multi-day work tracker into today's session queue. Read it with the `Read` tool (per the conventions above — don't Bash-probe):
 
-   - **Absent** → skip silently and continue to step 6. Most projects have no brief; it exists only in a workcoach-driven `_daily\<DD_MM_YY>\` session.
+   - **Absent** → skip silently and continue to step 6. Most projects have no brief; it exists only when a planning session has written one.
    - **Present** → list the slices under `## Proposed slices for today` as a numbered list, then offer to queue them (wait for the user's pick — this is the human gate):
 
    ```
-   Workcoach left a morning brief — N proposed slices:
+   A morning brief was found — N proposed slices:
      1. <slice text>
      2. <slice text>
    Queue which into today's kanban? ("all" / "1 and 3" / "none")
@@ -183,7 +183,7 @@ If the user is doing direct PM-shaped work without `/worktime` (review notes, de
 ## What this skill does NOT do
 
 - It does **not** write `active-task.txt`. That's `/worktime`'s job. Without it, the Stop hook stays silent.
-- It does **not** create a kanban entry for the PM session itself — PM holds no task of its own. (It *can* queue Worker tasks to `## TODO` when you adopt the workcoach morning brief in step 5, but those are Worker tasks, picked up via `/chosetime` — not a PM entry.)
+- It does **not** create a kanban entry for the PM session itself — PM holds no task of its own. (It *can* queue Worker tasks to `## TODO` when you adopt the morning brief in step 5, but those are Worker tasks, picked up via `/chosetime` — not a PM entry.)
 - It does **not** mark inbox pointers as PM:READ. That's a separate manual edit (or a future `/marktime` skill).
 - It does **not** close any open Worker task. If you walk into a stale `active-task.txt`, decide what to do explicitly (`/clocktime` or carry forward).
 

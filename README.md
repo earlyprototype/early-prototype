@@ -2,7 +2,7 @@
 
 A personal [Claude Code](https://code.claude.com) **plugin marketplace**.
 
-Ships two plugins: **`early-prototype`** — the **timeteam** suite (Product/PM/Worker session lifecycle as installable skills, hooks, and an agent) — and **`coachtime`**, a standalone mentor layer installed separately.
+Ships the **`early-prototype`** plugin — the **timeteam** suite: Product/PM/Worker session lifecycle as installable skills, hooks, and an agent.
 
 ## What it gives you (in 30 seconds)
 
@@ -10,7 +10,7 @@ You sit down to work. `/early-prototype:teamtime` opens a PM session (you're now
 
 When a Worker session ends, a §6-format handoff lands in `.claude/inbox/pm/` automatically. Next time you `/early-prototype:teamtime`, unread handoffs are surfaced.
 
-`/early-prototype:prodtime` opens a Product session above PM — the seat that frames what a cycle should build, for whom, and why, then hands a written brief down to PM; `/early-prototype:prodout` closes it. (The coach/mentor layer now lives in its own `coachtime` plugin, installed separately.)
+`/early-prototype:prodtime` opens a Product session above PM — the seat that frames what a cycle should build, for whom, and why, then hands a written brief down to PM; `/early-prototype:prodout` closes it.
 
 It's session lifecycle as ambient infrastructure: kanban state, handoffs, and session-end audit happen via hooks, not via you remembering to invoke them.
 
@@ -37,7 +37,6 @@ After installing, skills are namespaced under the plugin:
 - `/early-prototype:queuetime` — queue a task for later
 - `/early-prototype:readtime` — acknowledge a handoff
 - `/early-prototype:check-handoffs` — surface inbox
-- `/early-prototype:workcoachtime` — coach session (work variant)
 - `/early-prototype:cleantime` — wipe all session state in this project
 
 ## What's inside
