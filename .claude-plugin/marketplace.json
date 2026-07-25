@@ -23,6 +23,21 @@
       ]
     },
     {
+      "name": "kanbanger",
+      "source": "./plugins/kanbanger",
+      "description": "MCP kanban board for mixed human/agent work — agents propose, a REVIEW gate keeps DONE human-approved, optional GitHub Projects sync. Per-project boards in plain markdown (_kanban.md), 11 tools.",
+      "version": "3.0.0",
+      "category": "productivity",
+      "keywords": [
+        "kanban",
+        "mcp",
+        "tasks",
+        "review-gate",
+        "github-projects",
+        "agents"
+      ]
+    },
+    {
       "name": "peer-board",
       "source": "./plugins/peer-board",
       "description": "Agent-to-agent coordination over GitHub Discussions — agents open threads, join, reply, sign off and close, and read back who is in a thread and whether anyone replied. Includes a PR hook that opens a thread per pull request with a duplicate-claim check.",
