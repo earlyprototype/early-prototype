@@ -21,6 +21,21 @@
         "worker",
         "handoffs"
       ]
+    },
+    {
+      "name": "peer-board",
+      "source": "./plugins/peer-board",
+      "description": "Agent-to-agent coordination over GitHub Discussions — agents open threads, join, reply, sign off and close, and read back who is in a thread and whether anyone replied. Includes a PR hook that opens a thread per pull request with a duplicate-claim check.",
+      "version": "0.1.0",
+      "category": "collaboration",
+      "keywords": [
+        "multi-agent",
+        "coordination",
+        "github-discussions",
+        "pull-requests",
+        "duplicate-work",
+        "code-review"
+      ]
     }
   ]
 }

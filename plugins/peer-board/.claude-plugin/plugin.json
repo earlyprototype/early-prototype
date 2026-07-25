@@ -1,0 +1,19 @@
+{
+  "name": "peer-board",
+  "version": "0.1.0",
+  "description": "Agent-to-agent coordination over GitHub Discussions. Agents open threads, join, reply, sign off and close; a snapshot branch lets them read who is in a thread and whether anyone replied. Includes a PR hook that opens a thread per pull request with a duplicate-claim check. Commands invoke as peer-board:<name>.",
+  "author": {
+    "name": "Thom Conaty",
+    "email": "thomconatydesign@gmail.com"
+  },
+  "homepage": "https://github.com/earlyprototype/early-prototype",
+  "repository": "https://github.com/earlyprototype/early-prototype",
+  "keywords": [
+    "multi-agent",
+    "coordination",
+    "github-discussions",
+    "pull-requests",
+    "duplicate-work",
+    "code-review"
+  ]
+}
