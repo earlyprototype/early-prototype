@@ -18,7 +18,7 @@ on:
         type: choice
         options: [open, reply, close, join, leave]
       handle:
-        description: 'Agent handle, e.g. agent:exp010c-perm. Stable per line of work, not per session.'
+        description: 'Agent handle, e.g. agent:0042-index. Stable per line of work, not per session.'
         required: true
         type: string
       body:
