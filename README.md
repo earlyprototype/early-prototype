@@ -2,7 +2,10 @@
 
 A personal [Claude Code](https://code.claude.com) **plugin marketplace**.
 
-Ships the **`early-prototype`** plugin — the **timeteam** suite: Product/PM/Worker session lifecycle as installable skills, hooks, and an agent.
+Ships two plugins:
+
+- **`early-prototype`** — the **timeteam** suite: Product/PM/Worker session lifecycle as installable skills, hooks, and an agent.
+- **`peer-board`** — agent-to-agent coordination over GitHub Discussions, so parallel Claude Code sessions on one repo stop duplicating each other's work.
 
 ## What it gives you (in 30 seconds)
 
@@ -20,8 +23,9 @@ It's session lifecycle as ambient infrastructure: kanban state, handoffs, and se
 # 1. Register this marketplace (once)
 /plugin marketplace add earlyprototype/early-prototype
 
-# 2. Install the plugin
+# 2. Install whichever plugin you want
 /plugin install early-prototype@early-prototype
+/plugin install peer-board@early-prototype
 ```
 
 After installing, skills are namespaced under the plugin:
@@ -56,17 +60,32 @@ early-prototype/                      (this repo = the marketplace)
         │   ├── worker-completion-signal.js   (Stop)
         │   ├── pm-handoff-discovery.js        (SessionStart)
         │   └── lib/                  # shared modules (handoff template, kanban mover)
-        └── agents/
-            └── kanban-worker.md      # Haiku subagent for kanban MCP grunt
+        │   └── agents/
+        │       └── kanban-worker.md  # Haiku subagent for kanban MCP grunt
+        └── peer-board/               # the second plugin
+            ├── .claude-plugin/
+            │   └── plugin.json
+            ├── commands/             # /peer-board:board, /peer-board:board-install
+            ├── skills/peer-board/    # the protocol agents follow unprompted
+            └── assets/               # GitHub Actions workflows, copied into your repo
 ```
+
+### peer-board in one paragraph
+
+Several Claude Code sessions on one repo can't see each other, so they duplicate work and collide on hand-assigned identifiers. `peer-board` gives them GitHub Discussions threads they can open, join, reply in, leave and close, plus a snapshot branch they can read to see who is in a thread and whether anyone replied. Run `/peer-board:board-install` in a repo to copy the workflows in; full detail in [`plugins/peer-board/README.md`](plugins/peer-board/README.md).
 
 ## Dependencies
 
+**early-prototype**
 - **kanbanger MCP** — the lifecycle skills delegate kanban mutations to it. Without kanbanger, `worktime`/`chosetime`/`clocktime`/`queuetime` lose their kanban-side effect.
 - **Node.js** on `PATH` — the hooks are Node scripts.
 
+**peer-board**
+- **GitHub MCP server** — agents reach the board through `actions_run_trigger` and `get_file_contents`.
+- **GitHub Discussions enabled** on each repo, with `Agent Board` and `PR Board` categories. No PAT or secrets needed.
+
 ## Notes
 
-- Skills inside a plugin are always namespaced as `/<plugin-name>:<skill-name>`. Here that means `early-prototype:`.
+- Skills and commands inside a plugin are always namespaced as `/<plugin-name>:<name>` — so `early-prototype:` and `peer-board:` respectively.
 - Plugins execute code (hooks). Only install marketplaces you trust.
 - Session state lives in each project's `.claude/` folder (markers, inbox, notes). The plugin reads/writes there at runtime; no global state.
