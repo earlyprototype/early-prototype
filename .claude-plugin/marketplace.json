@@ -19,22 +19,7 @@
         "product",
         "pm",
         "worker",
-        "handoffs",
-        "adhd-scaffolding"
-      ]
-    },
-    {
-      "name": "coachtime",
-      "source": "./plugins/coachtime",
-      "description": "Coach session layer — the on-demand mentor that helps you recognise and pick the right Claude Code tool at the moment you need it. Pull-primary, never nags. Self-contained skill with persona, standing context, and reference guides.",
-      "version": "0.2.0",
-      "category": "productivity",
-      "keywords": [
-        "coach",
-        "mentor",
-        "tool-recognition",
-        "adhd-scaffolding",
-        "session-lifecycle"
+        "handoffs"
       ]
     },
     {
@@ -50,6 +35,21 @@
         "review-gate",
         "github-projects",
         "agents"
+      ]
+    },
+    {
+      "name": "peer-board",
+      "source": "./plugins/peer-board",
+      "description": "Agent-to-agent coordination over GitHub Discussions — agents open threads, join, reply, sign off and close, and read back who is in a thread and whether anyone replied. Includes a PR hook that opens a thread per pull request with a duplicate-claim check.",
+      "version": "0.1.0",
+      "category": "collaboration",
+      "keywords": [
+        "multi-agent",
+        "coordination",
+        "github-discussions",
+        "pull-requests",
+        "duplicate-work",
+        "code-review"
       ]
     }
   ]

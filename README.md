@@ -2,7 +2,11 @@
 
 A personal [Claude Code](https://code.claude.com) **plugin marketplace**.
 
-Ships three plugins: **`early-prototype`** — the **timeteam** suite (Product/PM/Worker session lifecycle as installable skills, hooks, and an agent) — **`coachtime`**, a standalone mentor layer installed separately — and **`kanbanger`**, an MCP kanban board with a human REVIEW gate, also installed separately.
+Ships three plugins:
+
+- **`early-prototype`** — the **timeteam** suite: Product/PM/Worker session lifecycle as installable skills, hooks, and an agent.
+- **`kanbanger`** — an MCP kanban board for mixed human/agent work, with a human REVIEW gate that keeps DONE human-approved.
+- **`peer-board`** — agent-to-agent coordination over GitHub Discussions, so parallel Claude Code sessions on one repo stop duplicating each other's work.
 
 ## What it gives you (in 30 seconds)
 
@@ -10,7 +14,7 @@ You sit down to work. `/early-prototype:teamtime` opens a PM session (you're now
 
 When a Worker session ends, a §6-format handoff lands in `.claude/inbox/pm/` automatically. Next time you `/early-prototype:teamtime`, unread handoffs are surfaced.
 
-`/early-prototype:prodtime` opens a Product session above PM — the seat that frames what a cycle should build, for whom, and why, then hands a written brief down to PM; `/early-prototype:prodout` closes it. (The coach/mentor layer now lives in its own `coachtime` plugin, installed separately.)
+`/early-prototype:prodtime` opens a Product session above PM — the seat that frames what a cycle should build, for whom, and why, then hands a written brief down to PM; `/early-prototype:prodout` closes it.
 
 It's session lifecycle as ambient infrastructure: kanban state, handoffs, and session-end audit happen via hooks, not via you remembering to invoke them.
 
@@ -20,8 +24,10 @@ It's session lifecycle as ambient infrastructure: kanban state, handoffs, and se
 # 1. Register this marketplace (once)
 /plugin marketplace add earlyprototype/early-prototype
 
-# 2. Install the plugin
+# 2. Install whichever plugin you want
 /plugin install early-prototype@early-prototype
+/plugin install kanbanger@early-prototype
+/plugin install peer-board@early-prototype
 ```
 
 After installing, skills are namespaced under the plugin:
@@ -37,7 +43,6 @@ After installing, skills are namespaced under the plugin:
 - `/early-prototype:queuetime` — queue a task for later
 - `/early-prototype:readtime` — acknowledge a handoff
 - `/early-prototype:check-handoffs` — surface inbox
-- `/early-prototype:workcoachtime` — coach session (work variant)
 - `/early-prototype:cleantime` — wipe all session state in this project
 
 ## What's inside
@@ -57,17 +62,39 @@ early-prototype/                      (this repo = the marketplace)
         │   ├── worker-completion-signal.js   (Stop)
         │   ├── pm-handoff-discovery.js        (SessionStart)
         │   └── lib/                  # shared modules (handoff template, kanban mover)
-        └── agents/
-            └── kanban-worker.md      # Haiku subagent for kanban MCP grunt
+        │   └── agents/
+        │       └── kanban-worker.md  # Haiku subagent for kanban MCP grunt
+        ├── kanbanger/                # MCP kanban board (own plugin)
+        │   ├── .claude-plugin/
+        │   │   └── plugin.json
+        │   └── README.md
+        └── peer-board/
+            ├── .claude-plugin/
+            │   └── plugin.json
+            ├── commands/             # /peer-board:board, /peer-board:board-install
+            ├── skills/peer-board/    # the protocol agents follow unprompted
+            └── assets/               # GitHub Actions workflows, copied into your repo
 ```
+
+### peer-board in one paragraph
+
+Several Claude Code sessions on one repo can't see each other, so they duplicate work and collide on hand-assigned identifiers. `peer-board` gives them GitHub Discussions threads they can open, join, reply in, leave and close, plus a snapshot branch they can read to see who is in a thread and whether anyone replied. Run `/peer-board:board-install` in a repo to copy the workflows in; full detail in [`plugins/peer-board/README.md`](plugins/peer-board/README.md).
 
 ## Dependencies
 
+**early-prototype**
 - **kanbanger MCP** — the lifecycle skills delegate kanban mutations to it. Without kanbanger, `worktime`/`chosetime`/`clocktime`/`queuetime` lose their kanban-side effect.
 - **Node.js** on `PATH` — the hooks are Node scripts.
 
+**kanbanger**
+- **`uv` and `git`** on `PATH` — the MCP server launches via `uvx --from git+…`, so nothing is installed locally.
+
+**peer-board**
+- **GitHub MCP server** — agents reach the board through `actions_run_trigger` and `get_file_contents`.
+- **GitHub Discussions enabled** on each repo, with `Agent Board` and `PR Board` categories. No PAT or secrets needed.
+
 ## Notes
 
-- Skills inside a plugin are always namespaced as `/<plugin-name>:<skill-name>`. Here that means `early-prototype:`.
+- Skills and commands inside a plugin are always namespaced as `/<plugin-name>:<name>` — so `early-prototype:`, `kanbanger:` and `peer-board:` respectively.
 - Plugins execute code (hooks). Only install marketplaces you trust.
 - Session state lives in each project's `.claude/` folder (markers, inbox, notes). The plugin reads/writes there at runtime; no global state.

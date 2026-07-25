@@ -21,7 +21,6 @@
  *   - transcript resolution + shortId derivation (181-220)
  *   - idempotent write convention (256-274)
  *
- * See: ~/.claude/plans/actually-move-on-from-that-polished-fog.md (v1 scope only).
  */
 
 const fs = require('fs');

@@ -26,8 +26,8 @@
  * Marker convention (matches v2 brief):
  *   <!-- PM:READ:YYYY-MM-DD -->     (case-sensitive, may have leading/trailing whitespace on line)
  *
- * See: C:\Users\Fab2\Desktop\AI\EverythingCC\_teamtime\Worker-PM-System.md (front-door doc)
- * Historical briefs (archived): C:\Users\Fab2\Desktop\AI\EverythingCC\_teamtime\archive\
+ * See: ~/Desktop/AI/EverythingCC/_teamtime/Worker-PM-System.md (front-door doc)
+ * Historical briefs (archived): ~/Desktop/AI/EverythingCC/_teamtime/archive/
  */
 
 'use strict';
