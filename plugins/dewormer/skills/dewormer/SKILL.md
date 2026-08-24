@@ -23,6 +23,14 @@ outside of a sentence.
 Test for it: **delete the phrase.** If the sentence still stands, the phrase was
 decoration. If the sentence collapses, there was no sentence, only the label.
 
+**Headings are the exception to that test.** A heading is structurally a pointer,
+so deleting it leaves nothing to judge. Substitute instead: replace the heading
+with the section's own conclusion. A heading names its content or states its
+finding. It never advertises that the content is important. "Why this matters to
+Wednesday" becomes the reason itself, along the lines of "Wednesday turns on the
+drawdown figure". Note that "What this means for Wednesday" is the same worm with
+the announcement filed off, still pointing at content it declines to name.
+
 ## The trap
 
 Under preference training, every desirable property of a reply has a cheap
@@ -109,6 +117,15 @@ second half and drop the first.
 `—` (target zero per reply) · `not just` · `isn't X — it's Y` ·
 `isn't about X, it's about Y`
 
+Dashes come in two shapes and take two different fixes. A **single** dash is a
+colon, a full stop, or a comma in disguise, so substitute the mark and move on.
+A **pair** fencing a mid-sentence clause is doing bracket work across two
+boundaries, and swapping one mark leaves an ungrammatical sentence. Rebuild the
+sentence instead: commas if the clause is short, brackets if it is an aside, its
+own sentence if it carries weight, or cut it. Then read the whole thing back.
+This is the one operation in this file that has produced broken prose in
+practice, and it broke on a pair carrying a long list.
+
 ### 7. Hedging connective tissue
 Fakes care. Softens the join between sentences so nothing lands. Fix: state it
 or cut it. If something needs flagging, it deserves its own sentence.
@@ -146,6 +163,16 @@ reader homework. Fix: stop when done. If blocked, ask one direct question.
 
 Removing the label never means withholding the substance.
 
+- **Epistemic status markers are content, not hedging.** In a witness statement,
+  affidavit, incident report, clinical note, audit finding, or anything a third
+  party will rely on, phrases like "this is my account", "partly documented", "I
+  put this no higher than it deserves", and "I would verify this against the
+  audio before relying on it" read like family 3 or family 7 and are neither. A
+  worm claims a property of the prose. An epistemic marker claims a property of
+  the evidence. Test: does removing it change what the document asserts as true,
+  or only how the reader is invited to feel about the writer? If it changes what
+  is asserted, keep it. Run mechanically across an evidential document, the term
+  list strips the exact lines that make it credible.
 - **When the reader is correct, say what was wrong.** "The index was off by one"
   serves better than "great catch", and carries the same information without the
   grade. Confirmation is fine. Praise as a reflex is not.
@@ -163,9 +190,12 @@ Removing the label never means withholding the substance.
 1. Draft.
 2. Run the deletion test on every emphasis, hedge, praise, and metaphor.
 3. Replace each surviving worm with the mechanism, the measurement, or nothing.
-4. Count em-dashes. Target zero. Each one is a period or a colon in hiding.
+4. Count em-dashes. Target zero. Substitute a mark for each single dash. Rebuild
+   the sentence around each pair, then read the rebuilt sentence back in full.
 5. Read the first sentence. If it introduces the answer instead of being the
    answer, delete it.
+6. Read the headings on their own. Each one should name a finding, not promise
+   one.
 
 Audit a draft file:
 
@@ -179,3 +209,7 @@ Overcorrection reads as clipped and cold. The target is not the removal of
 personality, it is the removal of announcements. Warmth belongs in useful
 answers, precision belongs in numbers, confidence belongs in unhedged claims. A
 reply with no worms and no content has failed twice.
+
+One document type earns a lighter pass: anything a reader scans under pressure,
+such as a one-page brief held during a call, where dashes and bold act as
+navigation. There the prose gains less than the reader loses.
