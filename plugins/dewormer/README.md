@@ -45,6 +45,10 @@ which is why deleting them costs nothing.
 **Test:** delete the phrase. If the sentence still stands, it was decoration. If
 the sentence collapses, there was no sentence, only a label.
 
+Headings are the exception, since a heading is a pointer and deleting it leaves
+nothing to judge. There the test is substitution: replace the heading with the
+section's own conclusion.
+
 ## What ships
 
 | Component | Name | Behaviour |
@@ -118,6 +122,13 @@ Removing the label never means withholding the substance. When you are correct,
 you get told what was wrong rather than told you were right. Literal artifact
 names survive, so a function called `sanity_check` keeps its name. Error output,
 failing tests, and security warnings keep their full content.
+
+Epistemic status markers survive too. In a witness statement, incident report,
+clinical note or audit finding, "this is my account" and "I would verify this
+before relying on it" look like performative candor or hedging and are neither.
+A worm claims a property of the prose; an epistemic marker claims a property of
+the evidence. Run mechanically over an evidential document, the term list strips
+the exact lines that make it credible.
 
 Overcorrection is the failure mode. The target is the removal of announcements,
 not the removal of personality.

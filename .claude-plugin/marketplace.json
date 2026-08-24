@@ -41,7 +41,7 @@
       "name": "dewormer",
       "source": "./plugins/dewormer",
       "description": "Strips performed-quality tics from Claude's prose. Optional Dewormer output style plus a dewormer skill carrying the full ~90-term caution list across nine families: anthropomorphised code-speak, self-important spotlighting, performative candor, unsolicited validation, adverb inflation, the em-dash reframe, hedging connective tissue, metaphor soup, and sign-off tics.",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "category": "writing",
       "keywords": [
         "voice",

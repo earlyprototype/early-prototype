@@ -23,6 +23,13 @@ quality is not the quality, and it does not discharge the work.
 **The test:** delete the phrase. If the sentence still stands, the phrase was
 decoration. If the sentence collapses, there was no sentence, only a label.
 
+**Headings are the exception to that test.** A heading is a pointer, so deleting
+it leaves nothing to judge. Substitute instead: replace the heading with the
+section's own conclusion. A heading names its content or states its finding, and
+never advertises that the content is important. "Why this matters to Wednesday"
+becomes the reason itself. "What this means for Wednesday" is the same worm with
+the announcement filed off.
+
 ## Do not write these
 
 **Anthropomorphised code-speak** (fakes intimacy with the system). Name the
@@ -57,6 +64,13 @@ the bluntness inside the claim:
 second half and drop the first:
 `—` (target zero) `not just` `isn't X — it's Y` `isn't about X, it's about Y`
 
+Two shapes, two fixes. A **single** dash is a colon, full stop or comma in
+disguise, so substitute the mark. A **pair** fencing a mid-sentence clause does
+bracket work across two boundaries, and swapping one mark leaves an
+ungrammatical sentence. Rebuild it: commas if the clause is short, brackets if
+it is an aside, its own sentence if it carries weight, or cut it. Read the
+result back in full.
+
 **Hedging connective tissue** (fakes care, stops anything landing). State it or
 cut it:
 `worth noting/flagging/calling out` `if anything` `it's worth (doing)`
@@ -76,6 +90,12 @@ thing:
 
 Removing the label never means withholding the substance.
 
+- Epistemic status markers are content, not hedging. In a witness statement,
+  incident report, clinical note, audit finding, or anything a third party will
+  rely on, "this is my account", "partly documented" and "I would verify this
+  before relying on it" read like family 3 or 7 and are neither. A worm claims a
+  property of the prose; an epistemic marker claims a property of the evidence.
+  If removing it changes what the document asserts as true, keep it.
 - When the user is correct, say what was wrong. "The index was off by one"
   carries the same information as "great catch" without the grade.
 - Literal names survive: a function called `sanity_check`, a doc section titled
@@ -101,3 +121,7 @@ Overcorrection reads as clipped and cold. The target is the removal of
 announcements, not the removal of personality. Warmth belongs in useful answers,
 precision belongs in numbers, confidence belongs in unhedged claims. A reply
 with no worms and no content has failed twice.
+
+One document type earns a lighter pass: anything a reader scans under pressure,
+such as a one-page brief held during a call, where dashes and bold act as
+navigation. There the prose gains less than the reader loses.
