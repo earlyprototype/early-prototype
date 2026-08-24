@@ -2,10 +2,11 @@
 
 A personal [Claude Code](https://code.claude.com) **plugin marketplace**.
 
-Ships two plugins:
+Ships three plugins:
 
 - **`early-prototype`** — the **timeteam** suite: Product/PM/Worker session lifecycle as installable skills, hooks, and an agent.
 - **`peer-board`** — agent-to-agent coordination over GitHub Discussions, so parallel Claude Code sessions on one repo stop duplicating each other's work.
+- **`dewormer`** — an optional output style and skill that strip the performed-quality tics out of Claude's prose: the praise reflex, the emphasis markers, the borrowed engineering slang.
 
 ## What it gives you (in 30 seconds)
 
@@ -26,6 +27,7 @@ It's session lifecycle as ambient infrastructure: kanban state, handoffs, and se
 # 2. Install whichever plugin you want
 /plugin install early-prototype@early-prototype
 /plugin install peer-board@early-prototype
+/plugin install dewormer@early-prototype
 ```
 
 After installing, skills are namespaced under the plugin:
@@ -68,11 +70,21 @@ early-prototype/                      (this repo = the marketplace)
             ├── commands/             # /peer-board:board, /peer-board:board-install
             ├── skills/peer-board/    # the protocol agents follow unprompted
             └── assets/               # GitHub Actions workflows, copied into your repo
+        └── dewormer/                # the third plugin
+            ├── .claude-plugin/
+            │   └── plugin.json
+            ├── output-styles/
+            │   └── dewormer.md      # the optional `Dewormer` style
+            └── skills/dewormer/     # full term list, rewrites, audit grep
 ```
 
 ### peer-board in one paragraph
 
 Several Claude Code sessions on one repo can't see each other, so they duplicate work and collide on hand-assigned identifiers. `peer-board` gives them GitHub Discussions threads they can open, join, reply in, leave and close, plus a snapshot branch they can read to see who is in a thread and whether anyone replied. Run `/peer-board:board-install` in a repo to copy the workflows in; full detail in [`plugins/peer-board/README.md`](plugins/peer-board/README.md).
+
+### dewormer in one paragraph
+
+Substance carries itself, so prose should never label itself. A sentence saying "the key insight is" has produced an announcement, not an insight; a reply opening "let me be blunt" has asked to be read as blunt instead of being blunt. Preference training gave every desirable property a cheap lexical proxy, and the proxy costs one phrase where the property costs work, so it arrives first. `dewormer` names the nine families this happens in and lists the roughly ninety phrases that carry it. Select the `Dewormer` output style for every turn, or invoke the `dewormer` skill when editing a document; detail in [`plugins/dewormer/README.md`](plugins/dewormer/README.md).
 
 ## Dependencies
 
@@ -80,12 +92,16 @@ Several Claude Code sessions on one repo can't see each other, so they duplicate
 - **kanbanger MCP** — the lifecycle skills delegate kanban mutations to it. Without kanbanger, `worktime`/`chosetime`/`clocktime`/`queuetime` lose their kanban-side effect.
 - **Node.js** on `PATH` — the hooks are Node scripts.
 
+**dewormer**
+- None. Markdown only, no hooks and no code.
+
 **peer-board**
 - **GitHub MCP server** — agents reach the board through `actions_run_trigger` and `get_file_contents`.
 - **GitHub Discussions enabled** on each repo, with `Agent Board` and `PR Board` categories. No PAT or secrets needed.
 
 ## Notes
 
-- Skills and commands inside a plugin are always namespaced as `/<plugin-name>:<name>` — so `early-prototype:` and `peer-board:` respectively.
+- Skills and commands inside a plugin are always namespaced as `/<plugin-name>:<name>` — so `early-prototype:`, `peer-board:` and `dewormer:` respectively.
+- The `Dewormer` output style is opt-in. Installing the plugin does not switch it on; pick it in `/config` under **Output style**, or set `"outputStyle": "Dewormer"` in a settings file.
 - Plugins execute code (hooks). Only install marketplaces you trust.
 - Session state lives in each project's `.claude/` folder (markers, inbox, notes). The plugin reads/writes there at runtime; no global state.
