@@ -46,6 +46,14 @@ The subagent must read DrDoc; merely naming the skill is insufficient. Do not
 invoke another CLI or provider to simulate a subagent. If native delegation is
 unavailable, explain that Baton cannot complete its delegated workflow here.
 
+Use the main agent's model and reasoning effort for the writer unless the user
+explicitly requests a different configuration. Use the host's documented
+inheritance when it preserves both; otherwise select them explicitly from the
+available options. Avoid role presets or defaults that silently choose a weaker
+model or lower effort. If the host cannot provide that configuration, report
+the limitation instead of silently substituting another model. Do not claim
+settings the host does not expose or guarantee.
+
 Give a compact briefing drawn from the session, even if history can be inherited:
 
 - The user's objective, scope, constraints, accepted corrections and preferences.
@@ -84,17 +92,18 @@ Do not guess, ask the user directly, or wait indefinitely for an unavailable
 channel. The main agent asks the user only when their answer is indispensable;
 otherwise record the unresolved matter clearly.
 
-Follow the project's document structure. Where none exists, use these sections
-as needed, omitting empty ones:
+Follow the project's handover convention. Place remaining work immediately
+after current state, using the project's equivalent headings. Where no structure
+exists, use these sections in this order as needed, omitting empty ones:
 
 - **Current state:** the objective, where the work stands and what the next
   agent needs to know first.
+- **Remaining work:** blockers and ordered next actions, starting with a
+  concrete step; include any decision still needed from the user.
 - **Changes and decisions:** relevant changes and their reasons; separate
   confirmed decisions from suggestions and open questions.
 - **Evidence and checks:** concrete file/section links, commands and actual
   results, including failures, skipped checks and limits of verification.
-- **Remaining work:** blockers and ordered next actions, starting with a
-  concrete step; include any decision still needed from the user.
 - **Working context:** necessary branch/worktree, uncommitted changes, setup
   and operational details. Preserve unrelated work.
 

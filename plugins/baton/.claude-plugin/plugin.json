@@ -1,6 +1,6 @@
 {
   "name": "baton",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Explicit session handovers: the main agent briefs a subagent, the subagent writes with bundled DrDoc guidance, and the main agent reviews and presents the result.",
   "author": {
     "name": "Thom Conaty"
