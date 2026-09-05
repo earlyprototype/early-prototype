@@ -39,7 +39,7 @@ For Graphtime in Codex, run `codex plugin marketplace add earlyprototype/early-p
 and `codex plugin add graphtime@early-prototype`. If the marketplace is already
 registered, refresh it with `codex plugin marketplace upgrade early-prototype`.
 See the [Graphtime guide](plugins/graphtime/README.md) for the required toolkit and
-the short personal `/graphtime` command.
+the short personal `$graphtime` invocation.
 
 After installing, skills are namespaced under the plugin:
 
@@ -99,7 +99,7 @@ A research answer for the operator of a project lands as a dated markdown note, 
 ## Dependencies
 
 **graphtime**
-- **Codex, Python and Git**, plus an existing **Knowledge Graph Kit** checkout containing `core/map_activation.py`. The toolkit is not bundled; see the [requirements](plugins/graphtime/README.md#requirements).
+- **Codex, Python 3 and Git**, plus an existing **Knowledge Graph Kit** checkout containing `core/map_activation.py`. The toolkit is not bundled; see the [requirements](plugins/graphtime/README.md#requirements).
 
 **baton**
 - A host with native subagents. DrDoc is bundled; no hooks, MCP server or additional runtime.

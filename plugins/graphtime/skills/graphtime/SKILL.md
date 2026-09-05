@@ -1,9 +1,10 @@
 ---
 name: graphtime
 description: Enable, inspect, or disable persistent Project Knowledge Map context for the current Codex project when the user invokes /graphtime, /graphtime:graphtime, $graphtime, or $graphtime:graphtime. Do not activate other projects implicitly.
+disable-model-invocation: true
 ---
 
-Enable the Project Knowledge Map for the user's current project folder. `/graphtime off` disables it; `/graphtime status` inspects the opt-in. The activation adapter targets Codex.
+Run only on an explicit invocation. Enable the Project Knowledge Map for the user's current project folder. `$graphtime off` disables it; `$graphtime status` inspects the opt-in. The activation adapter targets Codex.
 
 Use the existing `core/map_activation.py` helper in the user's Knowledge Graph Kit checkout. Locate that checkout from session context or an existing sibling `knowledge-graph-kit` directory, and resolve the helper's absolute path. Do not recreate its registration logic or copy the toolkit into the target project.
 
