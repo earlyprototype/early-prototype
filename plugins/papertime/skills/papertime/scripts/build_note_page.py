@@ -40,6 +40,7 @@ import posixpath
 import re
 import subprocess
 import sys
+from urllib.parse import quote
 
 try:
     import markdown
@@ -59,7 +60,8 @@ def git(cwd, *args):
 
 
 def repo_context(note_path):
-    """Return (repo_url, branch, note_rel_path, tracked, top). Outside a
+    """Return (repo_url, branch, note_rel_path, committed, top), where
+    committed means the file is tracked with no uncommitted change. Outside a
     checkout everything is None or False. The branch is the one checked out, so links
     work before the note's pull request merges; pass --branch to override
     (for example --branch main once it has merged)."""
@@ -75,7 +77,8 @@ def repo_context(note_path):
         head = git(d, "symbolic-ref", "--short", "refs/remotes/origin/HEAD")
         branch = head.split("/", 1)[1] if "/" in head else "main"
     rel = os.path.relpath(os.path.abspath(note_path), top).replace(os.sep, "/")
-    tracked = git(d, "ls-files", "--error-unmatch", os.path.abspath(note_path)) != ""
+    tracked = (git(d, "ls-files", "--error-unmatch", os.path.abspath(note_path)) != ""
+               and git(d, "status", "--porcelain", "--", os.path.abspath(note_path)) == "")
     return repo_url, branch, rel, tracked, top
 
 
@@ -128,6 +131,15 @@ def inline_html(md_text):
 # ----------------------------------------------------------------------------
 # transforms on the rendered body
 
+def gh_url(repo_url, kind, branch, target, frag=""):
+    """A GitHub URL safe to place in an attribute: branch and path segments
+    percent-encoded, the whole value HTML-escaped."""
+    url = f"{repo_url}/{kind}/{quote(branch or 'main', safe='')}/{quote(target, safe='/')}"
+    if frag:
+        url += "#" + quote(frag, safe="")
+    return html.escape(url, quote=True)
+
+
 def repo_path(note_rel, href_path):
     """A repository-relative path for a link relative to the note. A link
     cannot climb above the repository root, so leading ".." are dropped."""
@@ -152,8 +164,7 @@ def rewrite_md_links(html_text, repo_url, branch, note_rel):
         if not path:
             return m.group(0)
         target = repo_path(note_rel, path)
-        new = f"{repo_url}/blob/{branch}/{target}" + (f"#{frag}" if frag else "")
-        return f'href="{new}"'
+        return f'href="{gh_url(repo_url, "blob", branch, target, frag)}"'
 
     return re.sub(r'href="([^"]+)"', sub, html_text)
 
@@ -171,7 +182,7 @@ def inline_images(html_text, base_path, repo_url, branch, note_rel, root):
     root = os.path.realpath(root)
 
     def sub(m):
-        quote, src = m.group(1), m.group(2)
+        q, src = m.group(1), m.group(2)
         if re.match(r"^(?:[a-z][a-z0-9+.-]*:|#|/)", src, re.I):
             return m.group(0)
         local = os.path.realpath(os.path.join(base_dir, src))
@@ -179,12 +190,12 @@ def inline_images(html_text, base_path, repo_url, branch, note_rel, root):
         mime = mimetypes.guess_type(local)[0] or ""
         if inside and os.path.isfile(local) and mime in IMAGE_TYPES:
             data = base64.b64encode(open(local, "rb").read()).decode("ascii")
-            return f'src={quote}data:{mime};base64,{data}{quote}'
+            return f'src={q}data:{mime};base64,{data}{q}'
         if not inside:
             print(f"image left as written (outside the repository): {src}", file=sys.stderr)
             return m.group(0)
         if repo_url:
-            return f'src={quote}{repo_url}/raw/{branch}/{repo_path(note_rel, src)}{quote}'
+            return f'src={q}{gh_url(repo_url, "raw", branch, repo_path(note_rel, src))}{q}'
         print(f"image left relative (no image file at {src})", file=sys.stderr)
         return m.group(0)
 
@@ -196,7 +207,7 @@ def mark(cls, word):
 
 
 # The one definition of an epistemic mark, kept identical to check_note.py.
-MARK_RE = re.compile(r"(?<![\w-])(established|inferred|an inference|speculation|recalled)\b", re.I)
+MARK_RE = re.compile(r"(?<![\w-])(established|inferred|an inference|speculation|recalled)(?![\w-])", re.I)
 MARK_CLASS = {"established": "est", "inferred": "inf", "an inference": "inf",
               "speculation": "spec", "recalled": "rec"}
 SKIP_TAGS = {"code", "pre", "a", "h1", "h2", "h3", "h4", "h5", "h6", "figure", "script", "style"}
@@ -250,8 +261,11 @@ def insert_figures(body, figures, base_dir, repo=(None, None, None), root=None):
         if not frag:
             print(f"figure skipped: no html or file for {fig!r}", file=sys.stderr)
             continue
-        frag_rel = (repo_path(note_rel, os.path.relpath(frag_base, os.path.dirname(os.path.abspath(base_dir)))
-                              .replace(os.sep, "/")) if note_rel else note_rel)
+        # The sidecar sits beside the note, so a path relative to base_dir is
+        # relative to the note's directory as well.
+        frag_rel = (repo_path(note_rel, os.path.relpath(frag_base, base_dir).replace(os.sep, "/"))
+                    if note_rel else note_rel)
+        frag = rewrite_md_links(frag, repo_url, branch, frag_rel)
         frag = inline_images(frag, frag_base, repo_url, branch, frag_rel, root or base_dir)
         want = " ".join(after.split()).lower()
         hit = None
@@ -452,7 +466,7 @@ def build(args):
     if repo_url and note_rel:
         verb = "is committed as" if tracked else "is the file"
         foot = (f'The same text {verb} <code>{html.escape(note_rel)}</code> in '
-                f'<a href="{repo_url}">{html.escape(repo_url.split("github.com/")[-1])}</a>. '
+                f'<a href="{html.escape(repo_url, quote=True)}">{html.escape(repo_url.split("github.com/")[-1])}</a>. '
                 f'Where this page and that file differ, the file governs.')
     else:
         foot = (f'The same text is the file <code>{html.escape(os.path.basename(note_path))}</code>. '

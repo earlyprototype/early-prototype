@@ -65,7 +65,7 @@ H2_RE = re.compile(r"^##\s+(.*\S)\s*$")
 STANDFIRST_RE = re.compile(r"^(\*(?!\*).+(?<!\*)\*|_(?!_).+(?<!_)_)\s*$")
 PROVENANCE_RE = re.compile(r"^>\s*\*\*Provenance\.?\*\*")
 LIST_MARKER_RE = re.compile(r"^\s*(?:[-*+]|\d+\.)\s+")
-FENCE_RE = re.compile(r"^\s{0,3}(`{3,}|~{3,})")
+FENCE_RE = re.compile(r"^\s{0,3}(`{3,}|~{3,})(.*)$")
 
 
 def fence_toggle(line, open_marker):
@@ -74,10 +74,10 @@ def fence_toggle(line, open_marker):
     m = FENCE_RE.match(line)
     if not m:
         return open_marker
-    mark = m.group(1)
+    mark, rest = m.group(1), m.group(2)
     if open_marker is None:
         return mark
-    if mark[0] == open_marker[0] and len(mark) >= len(open_marker):
+    if mark[0] == open_marker[0] and len(mark) >= len(open_marker) and not rest.strip():
         return None
     return open_marker
 # A code span is any run of backticks closed by an equal run: `a`, ``a`b``.
@@ -89,7 +89,7 @@ ARROW_RE = re.compile("(?:->|→|=>)")
 
 # The one definition of an epistemic mark, shared in spirit with
 # build_note_page.py (which carries the same pattern). Keep them identical.
-MARK_RE = re.compile(r"(?<![\w-])(established|inferred|an inference|speculation|recalled)\b", re.I)
+MARK_RE = re.compile(r"(?<![\w-])(established|inferred|an inference|speculation|recalled)(?![\w-])", re.I)
 MARK_KEYS = {"established": "established", "inferred": "inferred", "an inference": "inferred",
              "speculation": "speculation", "recalled": "recalled"}
 
@@ -397,8 +397,9 @@ def self_test():
     assert any("file name" in m for _, m in rep.warnings)
 
     # An em dash inside code is a warning, not an error.
-    coded = GOOD.replace("The fact is established.",
-                         "The fact is established. The paper says `a " + EM_DASH + " b`.\n\n```\nx " + EM_DASH + " y\n```")
+    coded = GOOD.replace("The fact is established. The reading is inferred, not measured.",
+                         "The fact is established. The paper says `a " + EM_DASH + " b`. "
+                         "The reading is inferred, not measured.\n\n```\nx " + EM_DASH + " y\n```")
     rep = check_text("GOOD_NOTE_2026-09-05.md", coded)
     assert not rep.errors, rep.render()
     assert sum("em dash inside code" in m for _, m in rep.warnings) == 2, rep.render()
@@ -433,7 +434,7 @@ def self_test():
     # Marks: hyphenated compounds, headings, links and code do not count;
     # "an inference" and "recalled" do.
     marked = GOOD.replace("The fact is established.",
-                          "A well-established firm. That is an inference. Recalled, not checked: x. "
+                          "A well-established firm and an inferred-value estimate. That is an inference. Recalled, not checked: x. "
                           "`established` [established](a.md)\n\n### Established heads\n\nSpeculation: y.")
     rep = check_text("GOOD_NOTE_2026-09-05.md", marked)
     assert rep.marks == {"established": 0, "inferred": 2, "speculation": 1, "recalled": 1}, rep.marks
@@ -441,7 +442,7 @@ def self_test():
 
     # Tilde fences are code; raw figures and a three-mark convention are caught.
     tilde = GOOD.replace("The fact is established.",
-                         "The fact is established.\n\n~~~\nx " + EM_DASH + " y established H7\n~~~\n\n"
+                         "The fact is established.\n\n~~~\n```inner\nx " + EM_DASH + " y established H7\n```\n~~~\n\n"
                          "<figure><figcaption>established here</figcaption></figure>")
     rep = check_text("GOOD_NOTE_2026-09-05.md", tilde, "| H1 |")
     assert not rep.errors, rep.render()
