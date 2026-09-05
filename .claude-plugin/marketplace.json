@@ -74,7 +74,7 @@
       "name": "baton",
       "source": "./plugins/baton",
       "description": "Explicit session handovers: a subagent writes with bundled DrDoc guidance, asks the main agent for missing context, and returns the handover for review.",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "category": "productivity",
       "keywords": ["baton", "handover", "drdoc", "documentation", "subagent"]
     }

@@ -3,11 +3,14 @@
 Create a session handover when you invoke `/baton`. The main agent briefs one
 subagent, the subagent checks the project and writes with DrDoc, and the main
 agent reviews the document before presenting it. The writer can ask the main
-agent for missing context.
+agent for missing context. It uses the main agent's model and reasoning effort
+unless you explicitly request a different configuration; unsupported settings
+are reported rather than silently replaced.
 
-The handover records the current state, decisions and reasons, evidence and
-checks, unfinished work and the next action. It follows the project's existing
-handover convention and preserves historical handovers.
+The handover puts unfinished work and the next action directly after the current
+state, followed by decisions and reasons, evidence and checks, and working
+context. It uses the project's handover conventions and preserves historical
+handovers.
 
 ## Install
 
