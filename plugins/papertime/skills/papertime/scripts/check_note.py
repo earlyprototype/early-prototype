@@ -19,8 +19,9 @@ Errors (exit status 1):
         \\bH\\d+[a-z]?\\b) or experiment identifier (EXP-identifier, pattern
         \\bEXP_\\d{3}[a-z0-9]*(-[A-Za-z0-9]+)*\\b) in prose that the register
         does not mention and --allow does not list. Code spans and fenced
-        blocks are not searched. The patterns are the ones the ATR_research
-        CI uses.
+        blocks are not searched. Identifiers in the note are matched as the
+        ATR_research CI matches them, in their uppercase form; the register
+        is read case-insensitively so a lowercase register still counts.
 
 Warnings (exit status 0 unless --strict):
     an em dash inside a code span or fenced block (allowed only for a
@@ -32,8 +33,8 @@ Warnings (exit status 0 unless --strict):
     four questions; a body with no claim marked established or inferred; a
     provenance block that does not state the marking convention or does not
     say whether anything was run; a standfirst with no date; a body longer
-    than the ceiling (2,000 words, excluding fenced code and the Sources
-    section).
+    than the ceiling (2,000 words over the head and every section except
+    Sources, fenced code excluded).
 
 Marks. The checker counts the words established, inferred, an inference,
 speculation and recalled in the body prose (outside code spans, fenced
@@ -64,6 +65,8 @@ H2_RE = re.compile(r"^##\s+(.*\S)\s*$")
 STANDFIRST_RE = re.compile(r"^(\*(?!\*).+(?<!\*)\*|_(?!_).+(?<!_)_)\s*$")
 PROVENANCE_RE = re.compile(r"^>\s*\*\*Provenance\.?\*\*")
 LIST_MARKER_RE = re.compile(r"^\s*(?:[-*+]|\d+\.)\s+")
+# A code span is any run of backticks closed by an equal run: `a`, ``a`b``.
+CODE_SPAN_RE = re.compile(r"(`+)(?!`)(.+?)(?<!`)\1(?!`)")
 EM_DASH = "—"
 HORIZONTAL_BAR = "―"
 EN_DASH = "–"
@@ -113,7 +116,7 @@ def blank_code(lines):
         if in_fence:
             out.append("")
             continue
-        out.append(re.sub(r"`[^`\n]*`", " ", line))
+        out.append(CODE_SPAN_RE.sub(" ", line))
     return out
 
 
@@ -123,7 +126,10 @@ def prose_only(text):
     lines = blank_code(text.split("\n"))
     lines = [l for l in lines if not l.startswith("#")]
     text = "\n".join(lines)
-    text = re.sub(r"!?\[[^\]]*\]\([^)]*\)", " ", text)
+    text = re.sub(r"!?\[[^\]]*\]\([^)]*\)", " ", text)          # inline links and images
+    text = re.sub(r"!?\[[^\]]*\]\[[^\]]*\]", " ", text)         # reference-style links
+    text = re.sub(r"(?m)^\s*\[[^\]]+\]:\s*\S.*$", " ", text)     # link definitions
+    text = re.sub(r"(?is)<a\b[^>]*>.*?</a>", " ", text)           # raw HTML links, text included
     text = re.sub(r"<[^>\n]+>", " ", text)
     text = re.sub(r"https?://\S+", " ", text)
     return text
@@ -279,11 +285,17 @@ def check_text(path, text, register_text=None, allow=()):
     if brief is not None:
         title, ln, body = sections[brief]
         for pln, para in paragraphs(body):
-            lead = LIST_MARKER_RE.sub("", para.lstrip(), count=1)
-            if lead.startswith(("**", "__")):
-                continue
-            rep.warn('a paragraph in the "in brief" section does not open with a bold '
-                     'lead-in stating the answer', ln + pln)
+            plines = para.split("\n")
+            if LIST_MARKER_RE.match(plines[0]):
+                items = [(k, l) for k, l in enumerate(plines) if LIST_MARKER_RE.match(l)]
+            else:
+                items = [(0, plines[0])]
+            for k, l in items:
+                lead = LIST_MARKER_RE.sub("", l.lstrip(), count=1)
+                if lead.startswith(("**", "__")):
+                    continue
+                rep.warn('a paragraph in the "in brief" section does not open with a bold '
+                         'lead-in stating the answer', ln + pln + k)
     if closing is not None:
         title, ln, body = sections[closing]
         joined = "\n".join(body).lower()
@@ -299,7 +311,7 @@ def check_text(path, text, register_text=None, allow=()):
     if rep.marks["inferred"] == 0:
         rep.warn("no claim in the body is marked inferred")
 
-    counted = [(t, b) for i, (t, _, b) in enumerate(sections) if i != sources]
+    counted = [("", head)] + [(t, b) for i, (t, _, b) in enumerate(sections) if i != sources]
     words = 0
     for t, b in counted:
         words += len(t.split())
@@ -414,10 +426,34 @@ def self_test():
     assert rep.marks == {"established": 0, "inferred": 2, "speculation": 1, "recalled": 1}, rep.marks
     assert any("marked established" in m for _, m in rep.warnings)
 
-    # Length.
+    # Length, head included.
     long = GOOD.replace("The fact is established.", "The fact is established. " + "word " * 2100)
     rep = check_text("GOOD_NOTE_2026-09-05.md", long)
     assert any("ceiling" in m for _, m in rep.warnings), rep.render()
+    split = GOOD.replace("The fact is established.", "The fact is established. " + "word " * 1900)
+    split = split.replace("in answer to one question.*", "in answer to one question. " + "head " * 150 + "*")
+    rep = check_text("GOOD_NOTE_2026-09-05.md", split)
+    assert any("ceiling" in m for _, m in rep.warnings), rep.render()
+
+    # Multi-backtick code spans are code.
+    spans = GOOD.replace("The fact is established.",
+                         "The fact is established. See ``H9 " + EM_DASH + " established`` and `H8`.")
+    rep = check_text("GOOD_NOTE_2026-09-05.md", spans, "| H1 |")
+    assert not rep.errors, rep.render()
+    assert rep.marks["established"] == 1, rep.marks
+
+    # Reference-style and raw HTML links do not count as marks.
+    refs = GOOD.replace("The fact is established.",
+                        "The fact is [established][src] and <a href=\"x\">established</a>.\n\n[src]: http://example.org/established")
+    rep = check_text("GOOD_NOTE_2026-09-05.md", refs)
+    assert rep.marks["established"] == 0, rep.marks
+
+    # Every item of a tight list in the brief is checked.
+    tight = GOOD.replace("**Yes.** Because of the record. Section 2 has the details.",
+                         "- **Yes.** Because.\n- No bold here.\n- **Also.** Fine.")
+    rep = check_text("GOOD_NOTE_2026-09-05.md", tight)
+    bold = [l for l, m in rep.warnings if "bold" in m]
+    assert len(bold) == 1 and tight.split("\n")[bold[0] - 1] == "- No bold here.", (bold, rep.render())
     print("self-test OK")
 
 

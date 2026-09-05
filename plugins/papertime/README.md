@@ -90,8 +90,8 @@ word ceiling, so read it for register and density, not for length.
   builder share one definition of a mark and report the same counts; the
   builder tags marks anywhere in body prose (table cells, parentheticals,
   mid-sentence) and inserts figures after paragraphs that contain marks or
-  start with bold; the register check ignores code and is case-insensitive,
-  with `--allow` for tokens that are not identifiers; em dashes inside code
+  start with bold; the register check ignores code and reads the register
+  case-insensitively, with `--allow` for tokens that are not identifiers; em dashes inside code
   are a warning rather than an error, for verbatim quotation; the closing
   section's four questions are checked in its body, not its heading; correct
   line numbers on lead-in warnings, and list items are checked too; a

@@ -158,11 +158,12 @@ def rewrite_md_links(html_text, repo_url, branch, note_rel):
     return re.sub(r'href="([^"]+)"', sub, html_text)
 
 
-def inline_images(html_text, note_path, repo_url, branch, note_rel):
-    """Relative <img src> becomes a data URI when the file exists beside the
-    note (hosted pages cannot fetch external images); otherwise a raw GitHub
-    URL when the repository is known; otherwise it is left alone."""
-    note_dir = os.path.dirname(os.path.abspath(note_path))
+def inline_images(html_text, base_path, repo_url, branch, note_rel):
+    """Relative <img src> becomes a data URI when the file exists relative to
+    base_path's directory (hosted pages cannot fetch external images);
+    otherwise a raw GitHub URL when the repository is known; otherwise it is
+    left alone."""
+    note_dir = os.path.dirname(os.path.abspath(base_path))
 
     def sub(m):
         src = m.group(1)
@@ -225,15 +226,24 @@ def wrap_brief(body):
     return body[:m.start()] + m.group(1) + '<div class="brief">' + m.group(2) + "</div>" + body[m.end():]
 
 
-def insert_figures(body, figures, base_dir):
+def insert_figures(body, figures, base_dir, repo=(None, None, None)):
+    """Insert each figure after the paragraph it names. Relative images inside
+    a fragment are inlined relative to the fragment's own file, or to the
+    sidecar for inline html."""
+    repo_url, branch, note_rel = repo
     for fig in figures:
         after = fig.get("after", "")
         frag = fig.get("html")
+        frag_base = os.path.join(base_dir, "sidecar")
         if frag is None and fig.get("file"):
-            frag = open(os.path.join(base_dir, fig["file"]), encoding="utf-8").read()
+            frag_base = os.path.join(base_dir, fig["file"])
+            frag = open(frag_base, encoding="utf-8").read()
         if not frag:
             print(f"figure skipped: no html or file for {fig!r}", file=sys.stderr)
             continue
+        frag = inline_images(frag, frag_base, repo_url, branch,
+                             repo_path(note_rel, os.path.relpath(frag_base, os.path.dirname(os.path.abspath(
+                                 base_dir))).replace(os.sep, "/")) if note_rel else note_rel)
         want = " ".join(after.split()).lower()
         hit = None
         for pm in re.finditer(r"<p>(.*?)</p>", body, re.S):
@@ -407,7 +417,8 @@ def build(args):
         figures_path = cand if os.path.exists(cand) else None
     if figures_path:
         figures = json.load(open(figures_path, encoding="utf-8"))
-        body = insert_figures(body, figures, os.path.dirname(os.path.abspath(figures_path)))
+        body = insert_figures(body, figures, os.path.dirname(os.path.abspath(figures_path)),
+                              (repo_url, branch, note_rel))
     body, mark_counts = mark_claims(body)
 
     toc = table_of_contents(body)
