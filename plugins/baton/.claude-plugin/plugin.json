@@ -1,0 +1,12 @@
+{
+  "name": "baton",
+  "version": "1.0.0",
+  "description": "Explicit session handovers: the main agent briefs a subagent, the subagent writes with bundled DrDoc guidance, and the main agent reviews and presents the result.",
+  "author": {
+    "name": "Thom Conaty"
+  },
+  "homepage": "https://github.com/earlyprototype/early-prototype/tree/main/plugins/baton",
+  "repository": "https://github.com/earlyprototype/early-prototype",
+  "license": "MIT",
+  "keywords": ["baton", "handover", "drdoc", "documentation", "subagent"]
+}

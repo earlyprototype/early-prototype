@@ -2,22 +2,23 @@
 
 A personal [Claude Code](https://code.claude.com) **plugin marketplace**.
 
-Ships four plugins:
+Ships five plugins:
 
 - **`early-prototype`** — the **timeteam** suite: Product/PM/Worker session lifecycle as installable skills, hooks, and an agent.
 - **`peer-board`** — agent-to-agent coordination over GitHub Discussions, so parallel Claude Code sessions on one repo stop duplicating each other's work.
 - **`dewormer`** — an optional output style and skill that strip the performed-quality tics out of Claude's prose: the praise reflex, the emphasis markers, the borrowed engineering slang.
 - **`papertime`** — a skill that writes research answers as dated reading notes in the ATR house format (answer first, provenance, claims marked established, inferred, recalled or speculation, a 2,000-word ceiling, a closing section on what remains and what needs the operator's decision), with a checker and a page builder.
+- **`baton`** — an explicitly invoked session handover: the main agent briefs a subagent, the subagent writes with bundled DrDoc guidance, and the main agent reviews the result.
 
 ## What it gives you (in 30 seconds)
 
 You sit down to work. `/early-prototype:teamtime` opens a PM session (you're now in "review, decide, delegate" mode). `/early-prototype:worktime` clocks in a Worker task — your description goes on `_kanban.md` and the Stop hook starts producing handoffs. `/early-prototype:clocktime` closes the task (moves it to DONE via a review gate). `/early-prototype:sleeptime` closes the PM session and writes a session log.
 
-When a Worker session ends, a §6-format handoff lands in `.claude/inbox/pm/` automatically. Next time you `/early-prototype:teamtime`, unread handoffs are surfaced.
+After an agent turn ends with a Worker task marker present, the Stop hook writes a §6-format handoff and a pointer in `.claude/inbox/pm/`. This event does not establish that the task or development session is complete. Next time you `/early-prototype:teamtime`, unread handoffs are surfaced.
 
 `/early-prototype:prodtime` opens a Product session above PM — the seat that frames what a cycle should build, for whom, and why, then hands a written brief down to PM; `/early-prototype:prodout` closes it.
 
-It's session lifecycle as ambient infrastructure: kanban state, handoffs, and session-end audit happen via hooks, not via you remembering to invoke them.
+The lifecycle commands and hooks maintain kanban state and handoffs. For a session handover you choose to request, use Baton; its writer checks evidence and its main agent reviews the result.
 
 ## Install
 
@@ -30,6 +31,7 @@ It's session lifecycle as ambient infrastructure: kanban state, handoffs, and se
 /plugin install peer-board@early-prototype
 /plugin install dewormer@early-prototype
 /plugin install papertime@early-prototype
+/plugin install baton@early-prototype
 ```
 
 After installing, skills are namespaced under the plugin:
@@ -46,43 +48,30 @@ After installing, skills are namespaced under the plugin:
 - `/early-prototype:readtime` — acknowledge a handoff
 - `/early-prototype:check-handoffs` — surface inbox
 - `/early-prototype:cleantime` — wipe all session state in this project
+- `/baton:baton` — create a reviewed session handover; see the [Baton installation notes](plugins/baton/README.md#install) for the short personal `/baton` command
 
 ## What's inside
 
 ```
-early-prototype/                      (this repo = the marketplace)
-├── .claude-plugin/
-│   └── marketplace.json              # catalog (lists plugins)
+early-prototype/                      # marketplace repository
+├── .claude-plugin/marketplace.json   # catalog
 ├── README.md
-└── plugins/
-    └── early-prototype/              # the plugin
-        ├── .claude-plugin/
-        │   └── plugin.json
-        ├── skills/                   # 13 skills, each a folder with SKILL.md
-        ├── hooks/
-        │   ├── hooks.json            # hook registration
-        │   ├── worker-completion-signal.js   (Stop)
-        │   ├── pm-handoff-discovery.js        (SessionStart)
-        │   └── lib/                  # shared modules (handoff template, kanban mover)
-        │   └── agents/
-        │       └── kanban-worker.md  # Haiku subagent for kanban MCP grunt
-        └── peer-board/               # the second plugin
-            ├── .claude-plugin/
-            │   └── plugin.json
-            ├── commands/             # /peer-board:board, /peer-board:board-install
-            ├── skills/peer-board/    # the protocol agents follow unprompted
-            └── assets/               # GitHub Actions workflows, copied into your repo
-        └── dewormer/                # the third plugin
-            ├── .claude-plugin/
-            │   └── plugin.json
-            ├── output-styles/
-            │   └── dewormer.md      # the optional `Dewormer` style
-            └── skills/dewormer/     # full term list, rewrites, audit grep
-        └── papertime/               # the fourth plugin
-            ├── .claude-plugin/
-            │   └── plugin.json
-            └── skills/papertime/    # SKILL.md, references/ (format, voice),
-                                     # assets/ (template), scripts/ (checker, page builder)
+└── plugins/                         # each plugin has .claude-plugin/plugin.json
+    ├── early-prototype/
+    │   ├── skills/                  # Product / PM / Worker lifecycle
+    │   ├── hooks/                   # Stop, SessionStart and shared modules
+    │   └── agents/kanban-worker.md
+    ├── peer-board/
+    │   ├── commands/                # board, board-install
+    │   ├── skills/peer-board/
+    │   └── assets/                  # GitHub Actions workflows and scripts
+    ├── dewormer/
+    │   ├── output-styles/dewormer.md
+    │   └── skills/dewormer/
+    ├── papertime/
+    │   └── skills/papertime/        # instructions, references, assets, scripts
+    └── baton/
+        └── skills/baton/            # instructions, invocation policy, DrDoc
 ```
 
 ### peer-board in one paragraph
@@ -98,6 +87,9 @@ Substance carries itself, so prose should never label itself. A sentence saying 
 A research answer for the operator of a project lands as a dated markdown note, not a chat reply: title, italic standfirst, a provenance block saying where each fact came from and whether anything was run, the answers in brief, one section per question with every term defined in its sentence and every number carrying its scale and a baseline, claims marked inline as established, inferred, recalled or speculation, at most 2,000 words, and a closing section that says what happened, what it means, what remains and what needs the operator's decision. `papertime` carries the format and the voice rules, a template, a checker that fails on em dashes and missing parts (and, given an identifier register, on unregistered identifiers), and a builder that renders the note as a designed, theme-aware HTML page. The markdown file governs; the page is a view. Detail in [`plugins/papertime/README.md`](plugins/papertime/README.md).
 
 ## Dependencies
+
+**baton**
+- A host with native subagents. DrDoc is bundled; no hooks, MCP server or additional runtime.
 
 **early-prototype**
 - **kanbanger MCP** — the lifecycle skills delegate kanban mutations to it. Without kanbanger, `worktime`/`chosetime`/`clocktime`/`queuetime` lose their kanban-side effect.
@@ -115,7 +107,7 @@ A research answer for the operator of a project lands as a dated markdown note, 
 
 ## Notes
 
-- Skills and commands inside a plugin are always namespaced as `/<plugin-name>:<name>` — so `early-prototype:`, `peer-board:`, `dewormer:` and `papertime:` respectively.
+- Skills and commands inside a plugin have qualified names `/<plugin-name>:<name>` — including `baton:baton`. Personal skills can use the short command name.
 - The `Dewormer` output style is opt-in. Installing the plugin does not switch it on; pick it in `/config` under **Output style**, or set `"outputStyle": "Dewormer"` in a settings file.
 - Plugins execute code (hooks). Only install marketplaces you trust.
 - Session state lives in each project's `.claude/` folder (markers, inbox, notes). The plugin reads/writes there at runtime; no global state.
