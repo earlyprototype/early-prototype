@@ -77,6 +77,14 @@
       "version": "1.0.1",
       "category": "productivity",
       "keywords": ["baton", "handover", "drdoc", "documentation", "subagent"]
+    },
+    {
+      "name": "graphtime",
+      "source": "./plugins/graphtime",
+      "description": "Enable, inspect, or disable persistent Project Knowledge Map context for a chosen Codex project. Requires an existing Knowledge Graph Kit checkout with its activation helper; Codex hook trust remains the owner's step.",
+      "version": "0.1.0",
+      "category": "productivity",
+      "keywords": ["graphtime", "knowledge-graph", "project-context", "codex", "hooks"]
     }
   ]
 }
