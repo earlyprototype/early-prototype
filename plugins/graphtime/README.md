@@ -5,7 +5,7 @@ project. Activation persists across restarts; turning it off keeps stored knowle
 
 ## Requirements
 
-Codex, Python and Git, plus an existing Knowledge Graph Kit checkout containing
+Codex, Python 3 and Git, plus an existing Knowledge Graph Kit checkout containing
 `core/map_activation.py` and its supporting core modules. The toolkit is not
 bundled here. The activation helper is currently part of the local Project Map
 implementation; a fresh clone of the published kit may not contain it yet.
@@ -25,21 +25,22 @@ codex plugin add graphtime@early-prototype
 If the marketplace is already registered, refresh it first with
 `codex plugin marketplace upgrade early-prototype`.
 
-The plugin command is `/graphtime:graphtime`. For the short personal command,
+In Codex CLI, invoke `$graphtime:graphtime` or select the plugin skill through
+`/skills`. Use the skill selector in other Codex interfaces. For a personal copy,
 copy the complete `skills/graphtime/` directory, including `agents/`, to
-`~/.agents/skills/graphtime/`. Codex also accepts `$graphtime` for that skill.
+`~/.agents/skills/graphtime/` and invoke `$graphtime` in Codex CLI.
 Start a new session if it has not appeared. Update any personal copy when
 updating the plugin.
 
 ## Use
 
-| Personal command | Effect |
+| Codex CLI plugin invocation | Effect |
 |---|---|
-| `/graphtime` | Enable the chosen project's opt-in and prepare its hook. |
-| `/graphtime status` | Show the saved project root and opt-in state. |
-| `/graphtime off` | Stop delivery while retaining stored knowledge. |
+| `$graphtime:graphtime` | Enable the chosen project's opt-in and prepare its hook. |
+| `$graphtime:graphtime status` | Show the saved project root and opt-in state. |
+| `$graphtime:graphtime off` | Stop delivery while retaining stored knowledge. |
 
-With the plugin command, use the same arguments after `/graphtime:graphtime`.
+For a personal copy, use the same arguments after `$graphtime`.
 Nested folders reuse their nearest saved root. Deliberate subprojects and
 independent Git repositories retain their own boundaries.
 

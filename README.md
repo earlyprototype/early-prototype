@@ -56,7 +56,7 @@ After installing, skills are namespaced under the plugin:
 - `/early-prototype:check-handoffs` — surface inbox
 - `/early-prototype:cleantime` — wipe all session state in this project
 - `/baton:baton` — create a reviewed session handover; see the [Baton installation notes](plugins/baton/README.md#install) for the short personal `/baton` command
-- `/graphtime:graphtime` — enable, inspect or disable project context in Codex
+- `$graphtime:graphtime` — enable, inspect or disable project context in Codex CLI
 
 ## What's inside
 
@@ -120,7 +120,7 @@ A research answer for the operator of a project lands as a dated markdown note, 
 
 ## Notes
 
-- Skills and commands inside a plugin have qualified names `/<plugin-name>:<name>` — including `baton:baton` and `graphtime:graphtime`. Personal skills can use the short command name.
+- Claude Code plugin commands use `/<plugin-name>:<name>`. In Codex CLI, select plugin skills through `/skills` or `$<plugin-name>:<skill-name>`, such as `$graphtime:graphtime`. Personal skills use their short name.
 - The `Dewormer` output style is opt-in. Installing the plugin does not switch it on; pick it in `/config` under **Output style**, or set `"outputStyle": "Dewormer"` in a settings file.
 - Plugins execute code (hooks). Only install marketplaces you trust.
 - The early-prototype lifecycle suite stores session state in each project's `.claude/` folder (markers, inbox, notes). Graphtime uses `.project-map/` for map state and `.codex/hooks.json` for its project hook.

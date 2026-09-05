@@ -1,16 +1,18 @@
 ---
 name: graphtime
-description: Enable, inspect, or disable persistent Project Knowledge Map context for the current Codex project when the user invokes /graphtime, /graphtime:graphtime, or $graphtime. Do not activate other projects implicitly.
+description: Enable, inspect, or disable persistent Project Knowledge Map context for the current Codex project when the user invokes /graphtime, /graphtime:graphtime, $graphtime, or $graphtime:graphtime. Do not activate other projects implicitly.
 ---
 
 Enable the Project Knowledge Map for the user's current project folder. `/graphtime off` disables it; `/graphtime status` inspects the opt-in. The activation adapter targets Codex.
 
-Use the existing `core/map_activation.py` helper in the user's Knowledge Graph Kit checkout with the installed Python interpreter. Locate that checkout from session context or an existing sibling `knowledge-graph-kit` directory, and resolve the helper's absolute path. Do not recreate its registration logic or copy the toolkit into the target project.
+Use the existing `core/map_activation.py` helper in the user's Knowledge Graph Kit checkout. Locate that checkout from session context or an existing sibling `knowledge-graph-kit` directory, and resolve the helper's absolute path. Do not recreate its registration logic or copy the toolkit into the target project.
 
-Run the helper from the current session's chosen workspace folder, substituting the actual helper path:
+Resolve an available Python 3 command (`python3`, `python`, or Windows `py -3`) and check its version before running the helper. Use that command for every helper call; do not assume the `python` alias exists.
+
+Run the helper from the current session's chosen workspace folder, substituting the verified Python command and actual helper path:
 
 ```text
-python "/absolute/path/to/knowledge-graph-kit/core/map_activation.py" enable
+python3 "/absolute/path/to/knowledge-graph-kit/core/map_activation.py" enable
 ```
 
 Map `off` or `disable` to `disable`, and `status` to `status`. The helper reuses the nearest saved project root, stopping at a separate Git repository. For a first opt-in it uses that exact working folder. If the user or current session explicitly identifies a chosen project root, pass its absolute path with `--root <folder>` before the command, including when that folder is inside an activated parent project. Preserve a deliberate subproject root; never replace it with `git rev-parse --show-toplevel`. Do not ask for a path already identified by the session.
