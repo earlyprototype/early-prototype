@@ -7,7 +7,7 @@ markdown. The markdown file governs; the page is a view of it.
 ## The format
 
 A reading note is written for one reader: the operator of a project, sharp and
-attentive, without a machine-learning background, and the final authority on
+attentive, not a specialist in the note's subject, and the final authority on
 what happens next. Everything in the format serves that reader.
 
 - A title that names the subject, and an italic standfirst saying what was
@@ -19,23 +19,25 @@ what happens next. Everything in the format serves that reader.
 - One numbered section per question, answer first, evidence next, limits last,
   with every term defined in the sentence that uses it and every number carrying
   its scale and a baseline.
-- Claims marked inline as established, inferred or speculation. The page builder
-  renders those words as small tags.
+- Claims marked inline as established, inferred, recalled or speculation. The
+  page builder renders those words as small tags, and the checker counts the
+  same occurrences.
 - A closing section that answers, in order, what happened, what it means, what
   remains, and what needs the operator's decision. Then sources, and nothing
   after.
-- No em dashes anywhere.
+- At most 2,000 words outside code and sources. No em dashes in prose.
 
 ## What ships
 
 | Component | Path | What it does |
 |---|---|---|
 | Skill | `skills/papertime/SKILL.md` | The workflow: research with a provenance trail, write, check, build the page, land it in the repository. |
-| Format | `skills/papertime/references/format.md` | The format section by section, the mechanical conventions, the figure sidecar, the pull-request body pattern. |
-| Voice | `skills/papertime/references/voice.md` | The eight rules for writing to the operator. |
+| Format | `skills/papertime/references/format.md` | The format section by section, the length guide, the four marks, the mechanical conventions, the figure sidecar, the pull-request body pattern. |
+| Voice | `skills/papertime/references/voice.md` | The rules for writing to the operator, with the ATR-specific habits set apart at the end. |
 | Template | `skills/papertime/assets/TEMPLATE_NOTE.md` | A skeleton to start from. |
-| Checker | `skills/papertime/scripts/check_note.py` | Fails on em dashes, missing structural parts and, given an identifier register, unregistered hypothesis or experiment identifiers; warns on the rest. |
-| Page builder | `skills/papertime/scripts/build_note_page.py` | Turns the note into a designed, theme-aware HTML page with a section list, scrolling tables, tagged claims and optional figures. Needs the `markdown` package. |
+| Example | `skills/papertime/assets/EXAMPLE_EXCERPT.md` | The opening of a finished note, vendored so the register can be read offline. |
+| Checker | `skills/papertime/scripts/check_note.py` | Fails on em dashes in prose, missing structural parts and, given an identifier register, unregistered identifiers; warns on the rest, including a note over the word ceiling. |
+| Page builder | `skills/papertime/scripts/build_note_page.py` | Turns the note into a designed, theme-aware HTML page with a section list, scrolling tables, tagged claims, rewritten links, inlined images and optional figures. Needs the `markdown` package. |
 
 ## Install
 
@@ -53,23 +55,26 @@ directory is vendored into a repository's `.claude/skills/`.
 ## Use the scripts on their own
 
 ```bash
-python3 skills/papertime/scripts/check_note.py docs/MY_NOTE_2026-09-05.md --register path/to/REGISTER.md
+python3 skills/papertime/scripts/check_note.py docs/MY_NOTE_2026-09-05.md --register path/to/REGISTER.md --allow H100
 python3 -m pip install markdown
 python3 skills/papertime/scripts/build_note_page.py docs/MY_NOTE_2026-09-05.md \
-    --out /tmp/my_note.html --title "Short Name" --for "TC, the operator" --preview
+    --out /tmp/my_note.html --title "Short Name" --for "the operator" --preview
 ```
 
 The checker exits 1 on errors and 0 otherwise (`--strict` makes warnings
-errors). The builder writes a page body ready for a hosted artifact and, with
-`--preview`, a standalone file for a local browser.
+errors; `--self-test` runs its own tests). The builder writes a page body
+ready for a hosted artifact and, with `--preview`, a standalone file for a
+local browser. Inside a git checkout it links to the branch checked out; pass
+`--branch main` after the note merges, and `--repo-url` plus `--source-path`
+when the note is not in a checkout.
 
 ## Worked example
 
+`skills/papertime/assets/EXAMPLE_EXCERPT.md` is the opening of
 `docs/LATENT_CONTEXT_NOTE_2026-09-04.md` in
-`earlyprototype/lucier-gpt2-activ-tensor-reson-experiments`, with its figure
-sidecar `docs/LATENT_CONTEXT_NOTE_2026-09-04.figures.json` and figure
-`docs/figures/depth_band.html`. Read its first two screens to calibrate the
-register and the density before writing your own.
+`earlyprototype/lucier-gpt2-activ-tensor-reson-experiments`. The full note,
+with its figure sidecar and figure, is in that repository; it predates the
+word ceiling, so read it for register and density, not for length.
 
 ## Dependencies
 
@@ -77,6 +82,26 @@ register and the density before writing your own.
 - The `markdown` package for the page builder only.
 - `git` on `PATH` if you want relative links rewritten to GitHub URLs
   automatically; otherwise pass `--repo-url`.
+
+## Changes
+
+- 1.1.0: a fourth mark, recalled, for knowledge not checked against a source
+  today; a 2,000-word ceiling with a per-part guide; the checker and the
+  builder share one definition of a mark and report the same counts; the
+  builder tags marks anywhere in body prose (table cells, parentheticals,
+  mid-sentence) and inserts figures after paragraphs that contain marks or
+  start with bold; the register check ignores code and is case-insensitive,
+  with `--allow` for tokens that are not identifiers; em dashes inside code
+  are a warning rather than an error, for verbatim quotation; the closing
+  section's four questions are checked in its body, not its heading; correct
+  line numbers on lead-in warnings, and list items are checked too; a
+  warning when the provenance block does not say whether anything was run;
+  all relative links are rewritten and relative images are inlined; links
+  point at the branch checked out, and the footer only says "committed"
+  when the file is tracked; the section list uses the headings' own numbers;
+  the ATR-specific habits are separated from the general voice rules; the
+  worked example's opening is vendored.
+- 1.0.0: first release.
 
 ## Licence
 

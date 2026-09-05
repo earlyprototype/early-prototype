@@ -7,7 +7,7 @@ Ships four plugins:
 - **`early-prototype`** — the **timeteam** suite: Product/PM/Worker session lifecycle as installable skills, hooks, and an agent.
 - **`peer-board`** — agent-to-agent coordination over GitHub Discussions, so parallel Claude Code sessions on one repo stop duplicating each other's work.
 - **`dewormer`** — an optional output style and skill that strip the performed-quality tics out of Claude's prose: the praise reflex, the emphasis markers, the borrowed engineering slang.
-- **`papertime`** — a skill that writes research answers as dated reading notes in the ATR house format (answer first, provenance, claims marked established, inferred or speculation, a closing section on what remains and what needs the operator's decision), with a checker and a page builder.
+- **`papertime`** — a skill that writes research answers as dated reading notes in the ATR house format (answer first, provenance, claims marked established, inferred, recalled or speculation, a 2,000-word ceiling, a closing section on what remains and what needs the operator's decision), with a checker and a page builder.
 
 ## What it gives you (in 30 seconds)
 
@@ -95,7 +95,7 @@ Substance carries itself, so prose should never label itself. A sentence saying 
 
 ### papertime in one paragraph
 
-A research answer for the operator of a project lands as a dated markdown note, not a chat reply: title, italic standfirst, a provenance block saying where each fact came from and whether anything was run, the answers in brief, one section per question with every term defined in its sentence and every number carrying its scale and a baseline, claims marked inline as established, inferred or speculation, and a closing section that says what happened, what it means, what remains and what needs the operator's decision. `papertime` carries the format and the voice rules, a template, a checker that fails on em dashes and missing parts (and, given an identifier register, on unregistered identifiers), and a builder that renders the note as a designed, theme-aware HTML page. The markdown file governs; the page is a view. Detail in [`plugins/papertime/README.md`](plugins/papertime/README.md).
+A research answer for the operator of a project lands as a dated markdown note, not a chat reply: title, italic standfirst, a provenance block saying where each fact came from and whether anything was run, the answers in brief, one section per question with every term defined in its sentence and every number carrying its scale and a baseline, claims marked inline as established, inferred, recalled or speculation, at most 2,000 words, and a closing section that says what happened, what it means, what remains and what needs the operator's decision. `papertime` carries the format and the voice rules, a template, a checker that fails on em dashes and missing parts (and, given an identifier register, on unregistered identifiers), and a builder that renders the note as a designed, theme-aware HTML page. The markdown file governs; the page is a view. Detail in [`plugins/papertime/README.md`](plugins/papertime/README.md).
 
 ## Dependencies
 
