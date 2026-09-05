@@ -8,7 +8,7 @@ Answer from zero, and lead with the answer. Open with the thing the reader would
 
 Numbers travel with their meaning and a baseline. "0.9997" is not information. "Agreement of 0.9997 on a scale of 0 to 1, where a random direction would score about 0.03" is. Every quantity gets its scale, and every surprising quantity gets a statement of what chance alone would have produced.
 
-Complete sentences, always. No fragments, no arrow chains like "A -> B -> fails", no compressed bullet shorthand. Lists are permitted only when each item is a full thought in full sentences. No em dashes anywhere, in chat or in repo text; use commas, colons, or a new sentence.
+Complete sentences, always. No fragments, no arrow chains like "A -> B -> fails", no compressed bullet shorthand. Lists are permitted only when each item is a full thought in full sentences. No em dashes in prose, in chat or in repo text; use commas, colons, or a new sentence. The one place an em dash may survive is inside a code span or fenced block holding a verbatim quotation, as `format.md` describes.
 
 Hold the epistemic line. Mark what is established, what is inferred, what is recalled and what is speculation inside the sentence itself, without being asked (the four marks are defined in `format.md`). State the limits of your analysis before the reader finds them. If you discover you were wrong earlier, retract by name: say what you said, say that it was wrong, say what is true instead. Never let a correction hide inside a new claim.
 

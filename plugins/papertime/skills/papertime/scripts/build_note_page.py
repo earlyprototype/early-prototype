@@ -59,14 +59,14 @@ def git(cwd, *args):
 
 
 def repo_context(note_path):
-    """Return (repo_url, branch, note_rel_path, tracked). Outside a checkout
-    everything is None or False. The branch is the one checked out, so links
+    """Return (repo_url, branch, note_rel_path, tracked, top). Outside a
+    checkout everything is None or False. The branch is the one checked out, so links
     work before the note's pull request merges; pass --branch to override
     (for example --branch main once it has merged)."""
     d = os.path.dirname(os.path.abspath(note_path))
     top = git(d, "rev-parse", "--show-toplevel")
     if not top:
-        return None, None, None, False
+        return None, None, None, False, None
     url = git(d, "remote", "get-url", "origin")
     m = re.match(r"^(?:git@github\.com:|https?://github\.com/)([^/]+)/([^/]+?)(?:\.git)?/?$", url)
     repo_url = f"https://github.com/{m.group(1)}/{m.group(2)}" if m else None
@@ -76,7 +76,7 @@ def repo_context(note_path):
         branch = head.split("/", 1)[1] if "/" in head else "main"
     rel = os.path.relpath(os.path.abspath(note_path), top).replace(os.sep, "/")
     tracked = git(d, "ls-files", "--error-unmatch", os.path.abspath(note_path)) != ""
-    return repo_url, branch, rel, tracked
+    return repo_url, branch, rel, tracked, top
 
 
 # ----------------------------------------------------------------------------
@@ -158,28 +158,37 @@ def rewrite_md_links(html_text, repo_url, branch, note_rel):
     return re.sub(r'href="([^"]+)"', sub, html_text)
 
 
-def inline_images(html_text, base_path, repo_url, branch, note_rel):
-    """Relative <img src> becomes a data URI when the file exists relative to
-    base_path's directory (hosted pages cannot fetch external images);
+IMAGE_TYPES = {"image/png", "image/jpeg", "image/gif", "image/svg+xml", "image/webp", "image/avif"}
+
+
+def inline_images(html_text, base_path, repo_url, branch, note_rel, root):
+    """Relative <img src> becomes a data URI when the file is an image inside
+    root (the repository, or the note's directory outside a checkout);
     otherwise a raw GitHub URL when the repository is known; otherwise it is
-    left alone."""
-    note_dir = os.path.dirname(os.path.abspath(base_path))
+    left alone. Nothing outside root is ever read, so a source such as
+    ../../.env cannot pull a file into the page."""
+    base_dir = os.path.dirname(os.path.realpath(base_path))
+    root = os.path.realpath(root)
 
     def sub(m):
-        src = m.group(1)
+        quote, src = m.group(1), m.group(2)
         if re.match(r"^(?:[a-z][a-z0-9+.-]*:|#|/)", src, re.I):
             return m.group(0)
-        local = os.path.normpath(os.path.join(note_dir, src))
-        if os.path.isfile(local):
-            mime = mimetypes.guess_type(local)[0] or "application/octet-stream"
+        local = os.path.realpath(os.path.join(base_dir, src))
+        inside = os.path.commonpath([root, local]) == root
+        mime = mimetypes.guess_type(local)[0] or ""
+        if inside and os.path.isfile(local) and mime in IMAGE_TYPES:
             data = base64.b64encode(open(local, "rb").read()).decode("ascii")
-            return f'src="data:{mime};base64,{data}"'
+            return f'src={quote}data:{mime};base64,{data}{quote}'
+        if not inside:
+            print(f"image left as written (outside the repository): {src}", file=sys.stderr)
+            return m.group(0)
         if repo_url:
-            return f'src="{repo_url}/raw/{branch}/{repo_path(note_rel, src)}"'
-        print(f"image left relative (file not found beside the note): {src}", file=sys.stderr)
+            return f'src={quote}{repo_url}/raw/{branch}/{repo_path(note_rel, src)}{quote}'
+        print(f"image left relative (no image file at {src})", file=sys.stderr)
         return m.group(0)
 
-    return re.sub(r'src="([^"]+)"', sub, html_text)
+    return re.sub(r"""src=(["'])(.*?)\1""", sub, html_text)
 
 
 def mark(cls, word):
@@ -226,7 +235,7 @@ def wrap_brief(body):
     return body[:m.start()] + m.group(1) + '<div class="brief">' + m.group(2) + "</div>" + body[m.end():]
 
 
-def insert_figures(body, figures, base_dir, repo=(None, None, None)):
+def insert_figures(body, figures, base_dir, repo=(None, None, None), root=None):
     """Insert each figure after the paragraph it names. Relative images inside
     a fragment are inlined relative to the fragment's own file, or to the
     sidecar for inline html."""
@@ -241,9 +250,9 @@ def insert_figures(body, figures, base_dir, repo=(None, None, None)):
         if not frag:
             print(f"figure skipped: no html or file for {fig!r}", file=sys.stderr)
             continue
-        frag = inline_images(frag, frag_base, repo_url, branch,
-                             repo_path(note_rel, os.path.relpath(frag_base, os.path.dirname(os.path.abspath(
-                                 base_dir))).replace(os.sep, "/")) if note_rel else note_rel)
+        frag_rel = (repo_path(note_rel, os.path.relpath(frag_base, os.path.dirname(os.path.abspath(base_dir)))
+                              .replace(os.sep, "/")) if note_rel else note_rel)
+        frag = inline_images(frag, frag_base, repo_url, branch, frag_rel, root or base_dir)
         want = " ".join(after.split()).lower()
         hit = None
         for pm in re.finditer(r"<p>(.*?)</p>", body, re.S):
@@ -384,7 +393,8 @@ def build(args):
     if not title:
         sys.exit("no level-one title on the first line of the note")
 
-    repo_url, branch, note_rel, tracked = repo_context(note_path)
+    repo_url, branch, note_rel, tracked, top = repo_context(note_path)
+    root = top or os.path.dirname(os.path.abspath(note_path))
     if args.repo_url:
         repo_url = args.repo_url.rstrip("/")
     if args.branch:
@@ -395,6 +405,9 @@ def build(args):
         note_rel = "docs/" + os.path.basename(note_path)
         print(f"no checkout: assuming the note will live at {note_rel}; pass --source-path to say otherwise",
               file=sys.stderr)
+    if repo_url and not branch:
+        branch = "main"
+        print("no checkout: assuming branch main; pass --branch to say otherwise", file=sys.stderr)
     if repo_url and not args.branch and branch not in ("main", "master"):
         print(f"links point at branch {branch}; pass --branch main once the note has merged there",
               file=sys.stderr)
@@ -403,11 +416,11 @@ def build(args):
     body = md.convert(body_md)
     body = re.sub(r"^\s*<hr\s*/?>\s*", "", body, count=1)  # the head separator
     body = rewrite_md_links(body, repo_url, branch, note_rel)
-    body = inline_images(body, note_path, repo_url, branch, note_rel)
+    body = inline_images(body, note_path, repo_url, branch, note_rel, root)
     stand_html = rewrite_md_links(inline_html(standfirst), repo_url, branch, note_rel) if standfirst else ""
     prov_html = rewrite_md_links(inline_html(provenance), repo_url, branch, note_rel) if provenance else ""
-    stand_html = inline_images(stand_html, note_path, repo_url, branch, note_rel)
-    prov_html = inline_images(prov_html, note_path, repo_url, branch, note_rel)
+    stand_html = inline_images(stand_html, note_path, repo_url, branch, note_rel, root)
+    prov_html = inline_images(prov_html, note_path, repo_url, branch, note_rel, root)
     body = wrap_brief(body)
     body = body.replace("<table>", '<div class="table-scroll"><table>').replace("</table>", "</table></div>")
 
@@ -418,7 +431,7 @@ def build(args):
     if figures_path:
         figures = json.load(open(figures_path, encoding="utf-8"))
         body = insert_figures(body, figures, os.path.dirname(os.path.abspath(figures_path)),
-                              (repo_url, branch, note_rel))
+                              (repo_url, branch, note_rel), root)
     body, mark_counts = mark_claims(body)
 
     toc = table_of_contents(body)

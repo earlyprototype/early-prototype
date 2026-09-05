@@ -65,6 +65,21 @@ H2_RE = re.compile(r"^##\s+(.*\S)\s*$")
 STANDFIRST_RE = re.compile(r"^(\*(?!\*).+(?<!\*)\*|_(?!_).+(?<!_)_)\s*$")
 PROVENANCE_RE = re.compile(r"^>\s*\*\*Provenance\.?\*\*")
 LIST_MARKER_RE = re.compile(r"^\s*(?:[-*+]|\d+\.)\s+")
+FENCE_RE = re.compile(r"^\s{0,3}(`{3,}|~{3,})")
+
+
+def fence_toggle(line, open_marker):
+    """Track fenced blocks opened by ``` or ~~~ (the forms python-markdown's
+    fenced_code accepts). Returns the new open marker, or None when closed."""
+    m = FENCE_RE.match(line)
+    if not m:
+        return open_marker
+    mark = m.group(1)
+    if open_marker is None:
+        return mark
+    if mark[0] == open_marker[0] and len(mark) >= len(open_marker):
+        return None
+    return open_marker
 # A code span is any run of backticks closed by an equal run: `a`, ``a`b``.
 CODE_SPAN_RE = re.compile(r"(`+)(?!`)(.+?)(?<!`)\1(?!`)")
 EM_DASH = "—"
@@ -107,13 +122,11 @@ def blank_code(lines):
     replaced by spaces, so line numbers survive and prose checks do not fire
     on code."""
     out = []
-    in_fence = False
+    fence = None
     for line in lines:
-        if line.startswith("```"):
-            in_fence = not in_fence
-            out.append("")
-            continue
-        if in_fence:
+        was_open = fence is not None
+        fence = fence_toggle(line, fence)
+        if was_open or fence is not None:
             out.append("")
             continue
         out.append(CODE_SPAN_RE.sub(" ", line))
@@ -130,6 +143,7 @@ def prose_only(text):
     text = re.sub(r"!?\[[^\]]*\]\[[^\]]*\]", " ", text)         # reference-style links
     text = re.sub(r"(?m)^\s*\[[^\]]+\]:\s*\S.*$", " ", text)     # link definitions
     text = re.sub(r"(?is)<a\b[^>]*>.*?</a>", " ", text)           # raw HTML links, text included
+    text = re.sub(r"(?is)<(figure|pre|code)\b[^>]*>.*?</\1>", " ", text)  # raw figures and code, as the builder skips them
     text = re.sub(r"<[^>\n]+>", " ", text)
     text = re.sub(r"https?://\S+", " ", text)
     return text
@@ -149,11 +163,11 @@ def split_sections(lines):
     head = []
     sections = []
     current = None
-    in_fence = False
+    fence = None
     for i, line in enumerate(lines, start=1):
-        if line.startswith("```"):
-            in_fence = not in_fence
-        m = H2_RE.match(line) if not in_fence else None
+        was_open = fence is not None
+        fence = fence_toggle(line, fence)
+        m = H2_RE.match(line) if not (was_open or fence is not None) else None
         if m:
             current = (m.group(1), i, [])
             sections.append(current)
@@ -249,7 +263,7 @@ def check_text(path, text, register_text=None, allow=()):
             else:
                 break
         prov_text = " ".join(block).lower()
-        for word in ("established", "inferred", "speculation"):
+        for word in ("established", "inferred", "recalled", "speculation"):
             if word not in prov_text:
                 rep.warn(f'the provenance block does not state the marking convention (missing "{word}")', i0)
                 break
@@ -315,12 +329,11 @@ def check_text(path, text, register_text=None, allow=()):
     words = 0
     for t, b in counted:
         words += len(t.split())
-        in_fence = False
+        fence = None
         for l in b:
-            if l.startswith("```"):
-                in_fence = not in_fence
-                continue
-            if not in_fence:
+            was_open = fence is not None
+            fence = fence_toggle(l, fence)
+            if not (was_open or fence is not None):
                 words += len(l.split())
     rep.words = words
     if words > WORD_CEILING:
@@ -346,7 +359,7 @@ GOOD = """# A subject
 
 *A reading note written 2026-09-05 for the operator, in answer to one question.*
 
-> **Provenance.** Read from the record. Nothing here was run. Each claim is marked as established, inferred, or speculation.
+> **Provenance.** Read from the record. Nothing here was run. Each claim is marked as established, inferred, recalled, or speculation.
 
 ---
 
@@ -403,7 +416,7 @@ def self_test():
 
     # Lead-in check: list items count, line numbers point at the paragraph.
     warn = GOOD.replace("**Yes.** Because", "- Yes. Because").replace(
-        "marked as established, inferred, or speculation", "marked").replace(
+        "marked as established, inferred, recalled, or speculation", "marked").replace(
         "Nothing here was run.", "")
     rep = check_text("GOOD_NOTE_2026-09-05.md", warn)
     kinds = " | ".join(m for _, m in rep.warnings)
@@ -425,6 +438,17 @@ def self_test():
     rep = check_text("GOOD_NOTE_2026-09-05.md", marked)
     assert rep.marks == {"established": 0, "inferred": 2, "speculation": 1, "recalled": 1}, rep.marks
     assert any("marked established" in m for _, m in rep.warnings)
+
+    # Tilde fences are code; raw figures and a three-mark convention are caught.
+    tilde = GOOD.replace("The fact is established.",
+                         "The fact is established.\n\n~~~\nx " + EM_DASH + " y established H7\n~~~\n\n"
+                         "<figure><figcaption>established here</figcaption></figure>")
+    rep = check_text("GOOD_NOTE_2026-09-05.md", tilde, "| H1 |")
+    assert not rep.errors, rep.render()
+    assert rep.marks["established"] == 1, rep.marks
+    three = GOOD.replace("inferred, recalled, or speculation", "inferred, or speculation")
+    rep = check_text("GOOD_NOTE_2026-09-05.md", three)
+    assert any('missing "recalled"' in m for _, m in rep.warnings), rep.render()
 
     # Length, head included.
     long = GOOD.replace("The fact is established.", "The fact is established. " + "word " * 2100)
