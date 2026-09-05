@@ -1,0 +1,6 @@
+interface:
+  display_name: "Baton"
+  short_description: "Create a reviewed session handover with DrDoc"
+  default_prompt: "Use $baton to create a reviewed handover for this development session."
+policy:
+  allow_implicit_invocation: false
