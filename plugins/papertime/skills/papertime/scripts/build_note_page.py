@@ -157,16 +157,16 @@ def rewrite_md_links(html_text, repo_url, branch, note_rel):
         return html_text
 
     def sub(m):
-        href = m.group(1)
+        q, href = m.group(1), m.group(2)
         if re.match(r"^(?:[a-z][a-z0-9+.-]*:|#|/)", href, re.I):
             return m.group(0)
         path, _, frag = href.partition("#")
         if not path:
             return m.group(0)
         target = repo_path(note_rel, path)
-        return f'href="{gh_url(repo_url, "blob", branch, target, frag)}"'
+        return f'href={q}{gh_url(repo_url, "blob", branch, target, frag)}{q}'
 
-    return re.sub(r'href="([^"]+)"', sub, html_text)
+    return re.sub(r"""href=(["'])(.*?)\1""", sub, html_text)
 
 
 IMAGE_TYPES = {"image/png", "image/jpeg", "image/gif", "image/svg+xml", "image/webp", "image/avif"}

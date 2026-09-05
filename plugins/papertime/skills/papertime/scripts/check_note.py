@@ -66,6 +66,10 @@ STANDFIRST_RE = re.compile(r"^(\*(?!\*).+(?<!\*)\*|_(?!_).+(?<!_)_)\s*$")
 PROVENANCE_RE = re.compile(r"^>\s*\*\*Provenance\.?\*\*")
 LIST_MARKER_RE = re.compile(r"^\s*(?:[-*+]|\d+\.)\s+")
 FENCE_RE = re.compile(r"^\s{0,3}(`{3,}|~{3,})(.*)$")
+MONTHS = "January|February|March|April|May|June|July|August|September|October|November|December"
+DATE_RE = re.compile(r"\b\d{4}-\d{2}-\d{2}\b|\b(?:%s)\s+\d{1,2}(?:st|nd|rd|th)?,?\s+\d{4}\b|\b\d{1,2}(?:st|nd|rd|th)?\s+(?:%s),?\s+\d{4}\b"
+                     % (MONTHS, MONTHS), re.I)
+SETEXT_RE = re.compile(r"^\s{0,3}(=+|-+)\s*$")
 
 
 def fence_toggle(line, open_marker):
@@ -137,7 +141,16 @@ def prose_only(text):
     """Body text reduced to the prose the marks rule applies to: no code, no
     headings, no link text, no URLs."""
     lines = blank_code(text.split("\n"))
-    lines = [l for l in lines if not l.startswith("#")]
+    kept = []
+    for i, l in enumerate(lines):
+        if l.startswith("#"):
+            continue
+        if l.strip() and i + 1 < len(lines) and SETEXT_RE.match(lines[i + 1]):
+            continue  # a Setext heading: the line above an === or --- underline
+        if SETEXT_RE.match(l):
+            continue
+        kept.append(l)
+    lines = kept
     text = "\n".join(lines)
     text = re.sub(r"!?\[[^\]]*\]\([^)]*\)", " ", text)          # inline links and images
     text = re.sub(r"!?\[[^\]]*\]\[[^\]]*\]", " ", text)         # reference-style links
@@ -246,8 +259,8 @@ def check_text(path, text, register_text=None, allow=()):
                   "(one paragraph wrapped in single asterisks saying what was "
                   "asked, when, for whom, and where the note sits)",
                   stand[0] if stand else None)
-    elif not re.search(r"\d{4}", stand[1]):
-        rep.warn("the standfirst does not say when the note was written", stand[0])
+    elif not DATE_RE.search(stand[1]):
+        rep.warn("the standfirst does not say when the note was written (an ISO date or a spelled-out date)", stand[0])
 
     # Provenance block.
     prov_lines = [(i, l) for i, l in enumerate(head, start=1) if PROVENANCE_RE.match(l)]
@@ -267,7 +280,9 @@ def check_text(path, text, register_text=None, allow=()):
             if word not in prov_text:
                 rep.warn(f'the provenance block does not state the marking convention (missing "{word}")', i0)
                 break
-        if not re.search(r"\b(was|were|is|are)\s+(not\s+)?run\b|\bran\b|\bnothing\s+(here\s+)?was\s+run", prov_text):
+        if not re.search(r"\b(was|were|is|are)\s+(not\s+)?run\b|\bran\b|\b(did|do|does)\s+not\s+run\b"
+                         r"|\b(have|has|had)\s+not\s+(been\s+)?run\b|\bnothing\s+(here\s+)?was\s+run"
+                         r"|\bno\s+(commands?|code|scripts?)\s+(was|were)\s+run\b", prov_text):
             rep.warn("the provenance block does not say whether anything was run", i0)
 
     # Sections.
@@ -312,7 +327,7 @@ def check_text(path, text, register_text=None, allow=()):
                          'lead-in stating the answer', ln + pln + k)
     if closing is not None:
         title, ln, body = sections[closing]
-        joined = "\n".join(body).lower()
+        joined = "\n".join(blank_code(body)).lower()
         for phrase in ("what happened", "what it means", "what remains", "decision"):
             if phrase not in joined:
                 rep.warn(f'the closing section does not answer "{phrase}"', ln)
@@ -450,6 +465,24 @@ def self_test():
     three = GOOD.replace("inferred, recalled, or speculation", "inferred, or speculation")
     rep = check_text("GOOD_NOTE_2026-09-05.md", three)
     assert any('missing "recalled"' in m for _, m in rep.warnings), rep.render()
+
+    # Active-voice "did not run", a fake standfirst date, Setext headings, code in the closing.
+    active = GOOD.replace("Nothing here was run.", "I did not run any commands.")
+    rep = check_text("GOOD_NOTE_2026-09-05.md", active)
+    assert not any("was run" in m for _, m in rep.warnings), rep.render()
+    fake = GOOD.replace("written 2026-09-05", "against the 2024 benchmark")
+    rep = check_text("GOOD_NOTE_2026-09-05.md", fake)
+    assert any("when the note was written" in m for _, m in rep.warnings), rep.render()
+    spelled = GOOD.replace("written 2026-09-05", "written 5 September 2026")
+    rep = check_text("GOOD_NOTE_2026-09-05.md", spelled)
+    assert not any("when the note was written" in m for _, m in rep.warnings), rep.render()
+    setext = GOOD.replace("The fact is established.", "Established\n-----------\n\nThe fact is established.")
+    rep = check_text("GOOD_NOTE_2026-09-05.md", setext)
+    assert rep.marks["established"] == 1, rep.marks
+    coded_close = GOOD.replace("What happened: a note. What it means: little. What remains: nothing. What needs the operator's decision: none.",
+                               "```\nwhat happened what it means what remains decision\n```")
+    rep = check_text("GOOD_NOTE_2026-09-05.md", coded_close)
+    assert sum("closing section does not answer" in m for _, m in rep.warnings) == 4, rep.render()
 
     # Length, head included.
     long = GOOD.replace("The fact is established.", "The fact is established. " + "word " * 2100)
