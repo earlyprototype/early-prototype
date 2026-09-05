@@ -52,6 +52,22 @@
         "llm-tells",
         "plain-english"
       ]
+    },
+    {
+      "name": "reading-note",
+      "source": "./plugins/reading-note",
+      "description": "Research answers as dated reading notes in the ATR house format: answer first, a provenance block, every claim marked established, inferred or speculation, every number with its scale and baseline, no em dashes, and a closing section on what remains and what needs the operator's decision. Ships the format, the voice rules, a template, a mechanical checker and a builder that turns the note into a designed, theme-aware HTML page.",
+      "version": "1.0.0",
+      "category": "writing",
+      "keywords": [
+        "reading-note",
+        "research",
+        "writing",
+        "operator",
+        "provenance",
+        "epistemic-marks",
+        "html-page"
+      ]
     }
   ]
 }
