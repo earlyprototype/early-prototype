@@ -1,4 +1,4 @@
-# reading-note
+# papertime
 
 Writes research answers as dated reading notes in the ATR project's house
 format, checks them mechanically, and builds a shareable page from the same
@@ -30,31 +30,32 @@ what happens next. Everything in the format serves that reader.
 
 | Component | Path | What it does |
 |---|---|---|
-| Skill | `skills/reading-note/SKILL.md` | The workflow: research with a provenance trail, write, check, build the page, land it in the repository. |
-| Format | `skills/reading-note/references/format.md` | The format section by section, the mechanical conventions, the figure sidecar, the pull-request body pattern. |
-| Voice | `skills/reading-note/references/voice.md` | The eight rules for writing to the operator. |
-| Template | `skills/reading-note/assets/TEMPLATE_NOTE.md` | A skeleton to start from. |
-| Checker | `skills/reading-note/scripts/check_note.py` | Fails on em dashes, missing structural parts and, given an identifier register, unregistered hypothesis or experiment identifiers; warns on the rest. |
-| Page builder | `skills/reading-note/scripts/build_note_page.py` | Turns the note into a designed, theme-aware HTML page with a section list, scrolling tables, tagged claims and optional figures. Needs the `markdown` package. |
+| Skill | `skills/papertime/SKILL.md` | The workflow: research with a provenance trail, write, check, build the page, land it in the repository. |
+| Format | `skills/papertime/references/format.md` | The format section by section, the mechanical conventions, the figure sidecar, the pull-request body pattern. |
+| Voice | `skills/papertime/references/voice.md` | The eight rules for writing to the operator. |
+| Template | `skills/papertime/assets/TEMPLATE_NOTE.md` | A skeleton to start from. |
+| Checker | `skills/papertime/scripts/check_note.py` | Fails on em dashes, missing structural parts and, given an identifier register, unregistered hypothesis or experiment identifiers; warns on the rest. |
+| Page builder | `skills/papertime/scripts/build_note_page.py` | Turns the note into a designed, theme-aware HTML page with a section list, scrolling tables, tagged claims and optional figures. Needs the `markdown` package. |
 
 ## Install
 
 ```bash
 /plugin marketplace add earlyprototype/early-prototype
-/plugin install reading-note@early-prototype
+/plugin install papertime@early-prototype
 ```
 
 The skill loads on its own when a research question deserves a written
 answer, when a note, briefing, primer or write-up is asked for, or when a
 repository's rules say operator-facing answers land as reading notes. Invoke
-it by name as `/reading-note:reading-note`.
+it by name as `/papertime:papertime`, or as `/papertime` where the skill
+directory is vendored into a repository's `.claude/skills/`.
 
 ## Use the scripts on their own
 
 ```bash
-python3 skills/reading-note/scripts/check_note.py docs/MY_NOTE_2026-09-05.md --register path/to/REGISTER.md
+python3 skills/papertime/scripts/check_note.py docs/MY_NOTE_2026-09-05.md --register path/to/REGISTER.md
 python3 -m pip install markdown
-python3 skills/reading-note/scripts/build_note_page.py docs/MY_NOTE_2026-09-05.md \
+python3 skills/papertime/scripts/build_note_page.py docs/MY_NOTE_2026-09-05.md \
     --out /tmp/my_note.html --title "Short Name" --for "TC, the operator" --preview
 ```
 

@@ -7,7 +7,7 @@ Ships four plugins:
 - **`early-prototype`** — the **timeteam** suite: Product/PM/Worker session lifecycle as installable skills, hooks, and an agent.
 - **`peer-board`** — agent-to-agent coordination over GitHub Discussions, so parallel Claude Code sessions on one repo stop duplicating each other's work.
 - **`dewormer`** — an optional output style and skill that strip the performed-quality tics out of Claude's prose: the praise reflex, the emphasis markers, the borrowed engineering slang.
-- **`reading-note`** — a skill that writes research answers as dated reading notes in the ATR house format (answer first, provenance, claims marked established, inferred or speculation, a closing section on what remains and what needs the operator's decision), with a checker and a page builder.
+- **`papertime`** — a skill that writes research answers as dated reading notes in the ATR house format (answer first, provenance, claims marked established, inferred or speculation, a closing section on what remains and what needs the operator's decision), with a checker and a page builder.
 
 ## What it gives you (in 30 seconds)
 
@@ -29,7 +29,7 @@ It's session lifecycle as ambient infrastructure: kanban state, handoffs, and se
 /plugin install early-prototype@early-prototype
 /plugin install peer-board@early-prototype
 /plugin install dewormer@early-prototype
-/plugin install reading-note@early-prototype
+/plugin install papertime@early-prototype
 ```
 
 After installing, skills are namespaced under the plugin:
@@ -78,10 +78,10 @@ early-prototype/                      (this repo = the marketplace)
             ├── output-styles/
             │   └── dewormer.md      # the optional `Dewormer` style
             └── skills/dewormer/     # full term list, rewrites, audit grep
-        └── reading-note/            # the fourth plugin
+        └── papertime/               # the fourth plugin
             ├── .claude-plugin/
             │   └── plugin.json
-            └── skills/reading-note/ # SKILL.md, references/ (format, voice),
+            └── skills/papertime/    # SKILL.md, references/ (format, voice),
                                      # assets/ (template), scripts/ (checker, page builder)
 ```
 
@@ -93,9 +93,9 @@ Several Claude Code sessions on one repo can't see each other, so they duplicate
 
 Substance carries itself, so prose should never label itself. A sentence saying "the key insight is" has produced an announcement, not an insight; a reply opening "let me be blunt" has asked to be read as blunt instead of being blunt. Preference training gave every desirable property a cheap lexical proxy, and the proxy costs one phrase where the property costs work, so it arrives first. `dewormer` names the nine families this happens in and lists the roughly ninety phrases that carry it. Select the `Dewormer` output style for every turn, or invoke the `dewormer` skill when editing a document; detail in [`plugins/dewormer/README.md`](plugins/dewormer/README.md).
 
-### reading-note in one paragraph
+### papertime in one paragraph
 
-A research answer for the operator of a project lands as a dated markdown note, not a chat reply: title, italic standfirst, a provenance block saying where each fact came from and whether anything was run, the answers in brief, one section per question with every term defined in its sentence and every number carrying its scale and a baseline, claims marked inline as established, inferred or speculation, and a closing section that says what happened, what it means, what remains and what needs the operator's decision. The skill carries the format and the voice rules, a template, a checker that fails on em dashes and missing parts (and, given an identifier register, on unregistered identifiers), and a builder that renders the note as a designed, theme-aware HTML page. The markdown file governs; the page is a view. Detail in [`plugins/reading-note/README.md`](plugins/reading-note/README.md).
+A research answer for the operator of a project lands as a dated markdown note, not a chat reply: title, italic standfirst, a provenance block saying where each fact came from and whether anything was run, the answers in brief, one section per question with every term defined in its sentence and every number carrying its scale and a baseline, claims marked inline as established, inferred or speculation, and a closing section that says what happened, what it means, what remains and what needs the operator's decision. `papertime` carries the format and the voice rules, a template, a checker that fails on em dashes and missing parts (and, given an identifier register, on unregistered identifiers), and a builder that renders the note as a designed, theme-aware HTML page. The markdown file governs; the page is a view. Detail in [`plugins/papertime/README.md`](plugins/papertime/README.md).
 
 ## Dependencies
 
@@ -106,7 +106,7 @@ A research answer for the operator of a project lands as a dated markdown note, 
 **dewormer**
 - None. Markdown only, no hooks and no code.
 
-**reading-note**
+**papertime**
 - **Python 3** for the checker and the page builder; the `markdown` package for the page builder only.
 
 **peer-board**
@@ -115,7 +115,7 @@ A research answer for the operator of a project lands as a dated markdown note, 
 
 ## Notes
 
-- Skills and commands inside a plugin are always namespaced as `/<plugin-name>:<name>` — so `early-prototype:`, `peer-board:`, `dewormer:` and `reading-note:` respectively.
+- Skills and commands inside a plugin are always namespaced as `/<plugin-name>:<name>` — so `early-prototype:`, `peer-board:`, `dewormer:` and `papertime:` respectively.
 - The `Dewormer` output style is opt-in. Installing the plugin does not switch it on; pick it in `/config` under **Output style**, or set `"outputStyle": "Dewormer"` in a settings file.
 - Plugins execute code (hooks). Only install marketplaces you trust.
 - Session state lives in each project's `.claude/` folder (markers, inbox, notes). The plugin reads/writes there at runtime; no global state.
