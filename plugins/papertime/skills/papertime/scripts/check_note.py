@@ -84,8 +84,10 @@ def fence_toggle(line, open_marker):
     if mark[0] == open_marker[0] and len(mark) >= len(open_marker) and not rest.strip():
         return None
     return open_marker
-# A code span is any run of backticks closed by an equal run: `a`, ``a`b``.
-CODE_SPAN_RE = re.compile(r"(`+)(?!`)(.+?)(?<!`)\1(?!`)")
+# A code span is any run of backticks closed by an equal run: `a`, ``a`b``,
+# and it may cross line breaks inside a paragraph.
+CODE_SPAN_RE = re.compile(r"(`+)(?!`)([\s\S]+?)(?<!`)\1(?!`)")
+INDENTED_RE = re.compile(r"^(?: {4,}|\t)\S")
 EM_DASH = "—"
 HORIZONTAL_BAR = "―"
 EN_DASH = "–"
@@ -122,19 +124,36 @@ class Report:
 
 
 def blank_code(lines):
-    """Return a copy of the lines with fenced blocks and inline code spans
-    replaced by spaces, so line numbers survive and prose checks do not fire
-    on code."""
+    """Return a copy of the lines with fenced blocks, indented code blocks and
+    code spans (single-line or spanning lines) replaced by spaces, so line
+    numbers survive and prose checks do not fire on code."""
     out = []
     fence = None
+    prev_blank = True
+    in_indented = False
     for line in lines:
         was_open = fence is not None
         fence = fence_toggle(line, fence)
         if was_open or fence is not None:
             out.append("")
+            prev_blank = False
             continue
-        out.append(CODE_SPAN_RE.sub(" ", line))
-    return out
+        # An indented code block starts after a blank line with four spaces
+        # (or a tab) and runs until the next non-blank, non-indented line.
+        if in_indented and (INDENTED_RE.match(line) or not line.strip()):
+            out.append("")
+            continue
+        in_indented = prev_blank and bool(INDENTED_RE.match(line))
+        if in_indented:
+            out.append("")
+            prev_blank = False
+            continue
+        out.append(line)
+        prev_blank = not line.strip()
+    # Code spans, which may cross lines: blank their content but keep newlines.
+    joined = "\n".join(out)
+    joined = CODE_SPAN_RE.sub(lambda m: re.sub(r"[^\n]", " ", m.group(0)), joined)
+    return joined.split("\n")
 
 
 def prose_only(text):
@@ -152,9 +171,13 @@ def prose_only(text):
         kept.append(l)
     lines = kept
     text = "\n".join(lines)
+    labels = {m.group(1).strip().lower() for m in re.finditer(r"(?m)^\s*\[([^\]]+)\]:\s*\S", text)}
     text = re.sub(r"!?\[[^\]]*\]\([^)]*\)", " ", text)          # inline links and images
     text = re.sub(r"!?\[[^\]]*\]\[[^\]]*\]", " ", text)         # reference-style links
     text = re.sub(r"(?m)^\s*\[[^\]]+\]:\s*\S.*$", " ", text)     # link definitions
+    if labels:                                                    # shortcut references [label]
+        text = re.sub(r"!?\[([^\]\n]+)\]",
+                      lambda m: " " if m.group(1).strip().lower() in labels else m.group(0), text)
     text = re.sub(r"(?is)<a\b[^>]*>.*?</a>", " ", text)           # raw HTML links, text included
     text = re.sub(r"(?is)<(figure|pre|code)\b[^>]*>.*?</\1>", " ", text)  # raw figures and code, as the builder skips them
     text = re.sub(r"<[^>\n]+>", " ", text)
@@ -483,6 +506,19 @@ def self_test():
                                "```\nwhat happened what it means what remains decision\n```")
     rep = check_text("GOOD_NOTE_2026-09-05.md", coded_close)
     assert sum("closing section does not answer" in m for _, m in rep.warnings) == 4, rep.render()
+
+    # Shortcut reference links, multiline code spans, indented code blocks.
+    shortcut = GOOD.replace("The fact is established. The reading is inferred, not measured.",
+                            "See [established] and [inferred]. The reading is inferred, not measured.\n\n"
+                            "[established]: http://example.org/a")
+    rep = check_text("GOOD_NOTE_2026-09-05.md", shortcut)
+    assert rep.marks == {"established": 0, "inferred": 2, "speculation": 0, "recalled": 0}, rep.marks
+    multi = GOOD.replace("The fact is established.",
+                         "The fact is established. Code `spans a line " + EM_DASH + "\nand H9 established` here.\n\n"
+                         "    indented " + EM_DASH + " code H8 established\n    more code")
+    rep = check_text("GOOD_NOTE_2026-09-05.md", multi, "| H1 |")
+    assert not rep.errors, rep.render()
+    assert rep.marks["established"] == 1, rep.marks
 
     # Length, head included.
     long = GOOD.replace("The fact is established.", "The fact is established. " + "word " * 2100)

@@ -40,7 +40,7 @@ import posixpath
 import re
 import subprocess
 import sys
-from urllib.parse import quote
+from urllib.parse import quote, unquote
 
 try:
     import markdown
@@ -74,8 +74,9 @@ def repo_context(note_path):
     repo_url = f"https://github.com/{m.group(1)}/{m.group(2)}" if m else None
     branch = git(d, "rev-parse", "--abbrev-ref", "HEAD")
     if not branch or branch == "HEAD":
-        head = git(d, "symbolic-ref", "--short", "refs/remotes/origin/HEAD")
-        branch = head.split("/", 1)[1] if "/" in head else "main"
+        # Detached checkout: the commit itself is the only ref that surely
+        # carries the note; pass --branch to choose a name instead.
+        branch = git(d, "rev-parse", "HEAD") or "main"
     rel = os.path.relpath(os.path.abspath(note_path), top).replace(os.sep, "/")
     tracked = (git(d, "ls-files", "--error-unmatch", os.path.abspath(note_path)) != ""
                and git(d, "status", "--porcelain", "--", os.path.abspath(note_path)) == "")
@@ -134,9 +135,9 @@ def inline_html(md_text):
 def gh_url(repo_url, kind, branch, target, frag=""):
     """A GitHub URL safe to place in an attribute: branch and path segments
     percent-encoded, the whole value HTML-escaped."""
-    url = f"{repo_url}/{kind}/{quote(branch or 'main', safe='')}/{quote(target, safe='/')}"
+    url = f"{repo_url}/{kind}/{quote(branch or 'main', safe='')}/{quote(unquote(target), safe='/')}"
     if frag:
-        url += "#" + quote(frag, safe="")
+        url += "#" + quote(unquote(frag), safe="")
     return html.escape(url, quote=True)
 
 
@@ -148,6 +149,39 @@ def repo_path(note_rel, href_path):
     while target.startswith("../"):
         target = target[3:]
     return target
+
+
+# One tag token, with quoted attribute values allowed to contain > and the
+# other quote character; comments are one token too.
+TAG_RE = re.compile(r"""<(?:!--[\s\S]*?--|(?:[^"'>]|"[^"]*"|'[^']*')*)>""")
+SPLIT_RE = re.compile("(" + TAG_RE.pattern + ")")
+
+
+def tokens(html_text):
+    """Alternate text and tag tokens; tags satisfy TAG_RE, text is the rest."""
+    return SPLIT_RE.split(html_text)
+
+
+def tag_name(tok):
+    m = re.match(r"<(/?)([a-zA-Z][a-zA-Z0-9]*)", tok)
+    return (m.group(1) == "/", m.group(2).lower()) if m else (None, None)
+
+
+def transform_tags(html_text, names, fn):
+    """Apply fn to each opening tag whose name is in names and which sits
+    outside code and pre, so markup shown as an example in code is left as
+    the reader sees it."""
+    out = []
+    depth = {"code": 0, "pre": 0}
+    for tok in tokens(html_text):
+        if tok.startswith("<"):
+            closing, name = tag_name(tok)
+            if name in depth and not tok.endswith("/>"):
+                depth[name] += -1 if closing else 1
+            elif name in names and not closing and not any(depth.values()):
+                tok = fn(tok)
+        out.append(tok)
+    return "".join(out)
 
 
 def rewrite_md_links(html_text, repo_url, branch, note_rel):
@@ -166,7 +200,8 @@ def rewrite_md_links(html_text, repo_url, branch, note_rel):
         target = repo_path(note_rel, path)
         return f'href={q}{gh_url(repo_url, "blob", branch, target, frag)}{q}'
 
-    return re.sub(r"""href=(["'])(.*?)\1""", sub, html_text)
+    return transform_tags(html_text, {"a", "link", "area"},
+                          lambda tag: re.sub(r"""href=(["'])(.*?)\1""", sub, tag))
 
 
 IMAGE_TYPES = {"image/png", "image/jpeg", "image/gif", "image/svg+xml", "image/webp", "image/avif"}
@@ -199,7 +234,8 @@ def inline_images(html_text, base_path, repo_url, branch, note_rel, root):
         print(f"image left relative (no image file at {src})", file=sys.stderr)
         return m.group(0)
 
-    return re.sub(r"""src=(["'])(.*?)\1""", sub, html_text)
+    return transform_tags(html_text, {"img", "source"},
+                          lambda tag: re.sub(r"""src=(["'])(.*?)\1""", sub, tag))
 
 
 def mark(cls, word):
@@ -219,11 +255,11 @@ def mark_claims(body):
     counts = {"est": 0, "inf": 0, "spec": 0, "rec": 0}
     depth = {t: 0 for t in SKIP_TAGS}
     out = []
-    for piece in re.split(r"(<[^>]+>)", body):
+    for piece in tokens(body):
         if piece.startswith("<"):
-            m = re.match(r"<(/?)([a-zA-Z][a-zA-Z0-9]*)", piece)
-            if m and m.group(2).lower() in depth and not piece.endswith("/>"):
-                depth[m.group(2).lower()] += -1 if m.group(1) else 1
+            closing, name = tag_name(piece)
+            if name in depth and not piece.endswith("/>"):
+                depth[name] += -1 if closing else 1
             out.append(piece)
             continue
         if any(v > 0 for v in depth.values()) or not piece:
