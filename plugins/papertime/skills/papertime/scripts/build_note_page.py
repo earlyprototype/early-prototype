@@ -194,11 +194,14 @@ def rewrite_md_links(html_text, repo_url, branch, note_rel):
         q, href = m.group(1), m.group(2)
         if re.match(r"^(?:[a-z][a-z0-9+.-]*:|#|/)", href, re.I):
             return m.group(0)
-        path, _, frag = href.partition("#")
+        path, query, frag = re.match(r"([^?#]*)(\?[^#]*)?(?:#(.*))?$", href).groups()
         if not path:
             return m.group(0)
         target = repo_path(note_rel, path)
-        return f'href={q}{gh_url(repo_url, "blob", branch, target, frag)}{q}'
+        url = gh_url(repo_url, "blob", branch, target, frag or "")
+        if query:
+            url = url.split("#", 1)[0] + html.escape(query, quote=True) + ("#" + url.split("#", 1)[1] if "#" in url else "")
+        return f'href={q}{url}{q}'
 
     return transform_tags(html_text, {"a", "link", "area"},
                           lambda tag: re.sub(r"""href=(["'])(.*?)\1""", sub, tag))
@@ -220,7 +223,10 @@ def inline_images(html_text, base_path, repo_url, branch, note_rel, root):
         q, src = m.group(1), m.group(2)
         if re.match(r"^(?:[a-z][a-z0-9+.-]*:|#|/)", src, re.I):
             return m.group(0)
-        local = os.path.realpath(os.path.join(base_dir, src))
+        src, suffix = re.match(r"([^?#]*)(.*)", src).groups()
+        if not src:
+            return m.group(0)
+        local = os.path.realpath(os.path.join(base_dir, unquote(src)))
         inside = os.path.commonpath([root, local]) == root
         mime = mimetypes.guess_type(local)[0] or ""
         if inside and os.path.isfile(local) and mime in IMAGE_TYPES:
@@ -230,7 +236,7 @@ def inline_images(html_text, base_path, repo_url, branch, note_rel, root):
             print(f"image left as written (outside the repository): {src}", file=sys.stderr)
             return m.group(0)
         if repo_url:
-            return f'src={q}{gh_url(repo_url, "raw", branch, repo_path(note_rel, src))}{q}'
+            return f'src={q}{gh_url(repo_url, "raw", branch, repo_path(note_rel, src))}{html.escape(suffix, quote=True)}{q}'
         print(f"image left relative (no image file at {src})", file=sys.stderr)
         return m.group(0)
 

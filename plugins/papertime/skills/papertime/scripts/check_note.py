@@ -156,6 +156,17 @@ def blank_code(lines):
     return joined.split("\n")
 
 
+def strip_unrendered(line):
+    """Drop what the reader never sees as prose: link destinations, link
+    definitions, raw HTML tags and bare URLs."""
+    if re.match(r"^\s*\[[^\]]+\]:\s*\S", line):
+        return ""
+    line = re.sub(r"\]\([^)]*\)", "]", line)
+    line = re.sub(r"<[^>\n]+>", " ", line)
+    line = re.sub(r"https?://\S+", " ", line)
+    return line
+
+
 def prose_only(text):
     """Body text reduced to the prose the marks rule applies to: no code, no
     headings, no link text, no URLs."""
@@ -303,9 +314,10 @@ def check_text(path, text, register_text=None, allow=()):
             if word not in prov_text:
                 rep.warn(f'the provenance block does not state the marking convention (missing "{word}")', i0)
                 break
-        if not re.search(r"\b(was|were|is|are)\s+(not\s+)?run\b|\bran\b|\b(did|do|does)\s+not\s+run\b"
+        if not re.search(r"\b(was|were|is|are)\s+(not\s+)?run\b|\b(i|we)\s+(also\s+)?ran\b"
+                         r"|\b(i|we)\s+(did|do)\s+not\s+run\b|\b(did|do|does)\s+not\s+run\b"
                          r"|\b(have|has|had)\s+not\s+(been\s+)?run\b|\bnothing\s+(here\s+)?was\s+run"
-                         r"|\bno\s+(commands?|code|scripts?)\s+(was|were)\s+run\b", prov_text):
+                         r"|\bno\s+(commands?|code|scripts?|measurements?)\s+(was|were)\s+run\b", prov_text):
             rep.warn("the provenance block does not say whether anything was run", i0)
 
     # Sections.
@@ -385,6 +397,7 @@ def check_text(path, text, register_text=None, allow=()):
                      {t.upper() for t in EXP_RE_I.findall(register_text)} | \
                      {a.strip().upper() for a in allow if a.strip()}
         for i, line in enumerate(prose_lines, start=1):
+            line = strip_unrendered(line)
             for tok in set(HYP_RE.findall(line)) | set(EXP_RE.findall(line)):
                 if tok.upper() not in registered:
                     rep.error(f"identifier '{tok}' has no row in the register; a note "
@@ -488,6 +501,18 @@ def self_test():
     three = GOOD.replace("inferred, recalled, or speculation", "inferred, or speculation")
     rep = check_text("GOOD_NOTE_2026-09-05.md", three)
     assert any('missing "recalled"' in m for _, m in rep.warnings), rep.render()
+
+    # A "ran" about someone else does not count; identifiers inside link destinations are not prose.
+    others = GOOD.replace("Nothing here was run.", "The authors ran three experiments.")
+    rep = check_text("GOOD_NOTE_2026-09-05.md", others)
+    assert any("was run" in m for _, m in rep.warnings), rep.render()
+    mine = GOOD.replace("Nothing here was run.", "I ran the listing command once.")
+    rep = check_text("GOOD_NOTE_2026-09-05.md", mine)
+    assert not any("was run" in m for _, m in rep.warnings), rep.render()
+    urls = GOOD.replace("The fact is established.",
+                        "The fact is established, per [the source](https://example.test/H999) and <a href=\"x/EXP_777\">y</a>.")
+    rep = check_text("GOOD_NOTE_2026-09-05.md", urls, "| H1 |")
+    assert not rep.errors, rep.render()
 
     # Active-voice "did not run", a fake standfirst date, Setext headings, code in the closing.
     active = GOOD.replace("Nothing here was run.", "I did not run any commands.")
