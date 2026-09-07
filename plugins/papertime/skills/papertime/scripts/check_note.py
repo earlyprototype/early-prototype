@@ -18,10 +18,10 @@ Errors (exit status 1):
     with --register, any hypothesis number (H-number, pattern
         \\bH\\d+[a-z]?\\b) or experiment identifier (EXP-identifier, pattern
         \\bEXP_\\d{3}[a-z0-9]*(-[A-Za-z0-9]+)*\\b) in prose that the register
-        does not mention and --allow does not list. Code spans and fenced
-        blocks are not searched. Identifiers in the note are matched as the
-        ATR_research CI matches them, in their uppercase form; the register
-        is read case-insensitively so a lowercase register still counts.
+        does not mention and --allow does not list. Code spans, fenced
+        blocks, link destinations and URLs are not searched. Identifiers in
+        the note are matched in their uppercase form, the form registers use;
+        the register itself is read case-insensitively.
 
 Warnings (exit status 0 unless --strict):
     an em dash inside a code span or fenced block (allowed only for a
@@ -327,11 +327,22 @@ def check_text(path, text, register_text=None, allow=()):
                 return idx
         return None
 
+    def find_last(pred):
+        for idx in reversed(range(len(sections))):
+            if pred(sections[idx][0].lower()):
+                return idx
+        return None
+
+    def is_sources(title):
+        """The Sources section, not a question that happens to say "source":
+        the heading itself opens with the word, once any numbering is off."""
+        return re.match(r"^sources?\b", re.sub(r"^\d+[.)]?\s*", "", title.strip())) is not None
+
     if not sections:
         rep.error("no level-two sections (## heading)")
     brief = find(lambda t: "in brief" in t)
     closing = find(lambda t: "what remains" in t)
-    sources = find(lambda t: re.search(r"\bsources?\b", t) is not None)
+    sources = find_last(is_sources)
     if brief is None:
         rep.error('no section whose heading contains "in brief"')
     if closing is None:
@@ -544,6 +555,16 @@ def self_test():
     rep = check_text("GOOD_NOTE_2026-09-05.md", multi, "| H1 |")
     assert not rep.errors, rep.render()
     assert rep.marks["established"] == 1, rep.marks
+
+    # A question heading that says "source" is not the Sources section.
+    sourceish = GOOD.replace("## 2. The question", "## 2. Which data source should we use?").replace(
+        "The fact is established. The reading is inferred, not measured.",
+        "The fact is established. The reading is inferred, not measured. " + "word " * 2100)
+    rep = check_text("GOOD_NOTE_2026-09-05.md", sourceish)
+    assert not rep.errors, rep.render()
+    assert any("ceiling" in m for _, m in rep.warnings), rep.render()
+    assert not any("should be the last section" in m for _, m in rep.warnings), rep.render()
+    assert rep.words > 2000, rep.words
 
     # Length, head included.
     long = GOOD.replace("The fact is established.", "The fact is established. " + "word " * 2100)

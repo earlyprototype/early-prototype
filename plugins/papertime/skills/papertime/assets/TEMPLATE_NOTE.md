@@ -1,8 +1,8 @@
 # <Subject of the note, as a name>
 
-*A reading note written <YYYY-MM-DD> for <the operator>, in answer to <how many> questions asked <where>: <question one>; <question two>; <question three>. It sits beside <the document readers start from>, which <what that document does>, and does not repeat it. <Or: There is no earlier document for it to sit beside, so it stands alone.>*
+*A reading note written <YYYY-MM-DD> for <the reader>, in answer to <how many> questions asked <where>: <question one>; <question two>; <question three>. It sits beside <the document the reader already has>, which <what that document does>, and does not repeat it. <Or: There is nothing for it to sit beside, so it stands alone.>*
 
-> **Provenance.** Facts about this project were read from <which committed files>. Facts about <the paper or tool> were read from <its page or source> on <date>. <Configuration or version> numbers were read from <the source>. <Nothing here was run: this note contains no new measurements. | What was run: <commands>, each a <what kind of check>, not a functional test.> Each claim is marked as established (read today from a record, a source or a command's output), inferred (reasoned from established facts), recalled (from general knowledge, not checked today), or speculation.
+> **Provenance.** <Which class of material> was read from <which files, pages, people or listings> on <date>. <Another class> was read from <its source>. <Nothing was run or measured for this note. | What was run: <commands or measurements>, each a <what kind of check>, not a <what it is not>.> Each claim is marked as established (read today from a source named here), inferred (reasoned from established facts), recalled (general knowledge, not checked today), or speculation.
 
 ---
 
@@ -39,4 +39,4 @@ What needs the operator's decision:
 
 ## Sources
 
-- <Citation with URL or file path.>
+- <Citation with URL, file path, name or date.>
