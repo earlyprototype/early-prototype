@@ -5,7 +5,7 @@ Usage:
     python3 build_note_page.py NOTE.md [--out PAGE.html] [--title "Short Name"]
         [--repo-url https://github.com/owner/repo] [--branch main]
         [--figures NOTE.figures.json] [--for "TC, the operator"]
-        [--project "ATR project"] [--preview]
+        [--project "My project"] [--theme light|dark|auto] [--preview]
 
 The markdown file governs; the page is a view of it. The builder:
   reads the title (first level-one heading), the italic standfirst and the
@@ -23,6 +23,8 @@ The markdown file governs; the page is a view of it. The builder:
     checker counts by, so the two tools agree;
   inserts figures listed in a sidecar JSON file after the paragraph each one
     names (see --figures);
+  renders light by default, whatever the reader's system setting, unless
+    --theme says otherwise;
   writes the page body without <html>, <head> or <body> tags, ready for the
     Artifact tool, and with --preview also writes a standalone
     <PAGE>.preview.html for a local browser.
@@ -132,13 +134,17 @@ def inline_html(md_text):
 # ----------------------------------------------------------------------------
 # transforms on the rendered body
 
-def gh_url(repo_url, kind, branch, target, frag=""):
-    """A GitHub URL safe to place in an attribute: branch and path segments
-    percent-encoded, the whole value HTML-escaped."""
+def gh_url(repo_url, kind, branch, target, query="", frag=""):
+    """A GitHub URL for a repository path, with the branch and path segments
+    percent-encoded. The query and fragment are the author's own, carried
+    through as written. The result is raw: the caller HTML-escapes it once
+    for the attribute it lands in."""
     url = f"{repo_url}/{kind}/{quote(branch or 'main', safe='')}/{quote(unquote(target), safe='/')}"
+    if query:
+        url += query
     if frag:
         url += "#" + quote(unquote(frag), safe="")
-    return html.escape(url, quote=True)
+    return url
 
 
 def repo_path(note_rel, href_path):
@@ -191,57 +197,88 @@ def rewrite_md_links(html_text, repo_url, branch, note_rel):
         return html_text
 
     def sub(m):
-        q, href = m.group(1), m.group(2)
+        # The attribute comes from rendered HTML, where & is already &amp;;
+        # decode it, rebuild the URL, and escape the result exactly once.
+        q, href = m.group(1), html.unescape(m.group(2))
         if re.match(r"^(?:[a-z][a-z0-9+.-]*:|#|/)", href, re.I):
             return m.group(0)
         path, query, frag = re.match(r"([^?#]*)(\?[^#]*)?(?:#(.*))?$", href).groups()
         if not path:
             return m.group(0)
-        target = repo_path(note_rel, path)
-        url = gh_url(repo_url, "blob", branch, target, frag or "")
-        if query:
-            url = url.split("#", 1)[0] + html.escape(query, quote=True) + ("#" + url.split("#", 1)[1] if "#" in url else "")
-        return f'href={q}{url}{q}'
+        url = gh_url(repo_url, "blob", branch, repo_path(note_rel, path), query or "", frag or "")
+        return f'href={q}{html.escape(url, quote=True)}{q}'
 
     return transform_tags(html_text, {"a", "link", "area"},
-                          lambda tag: re.sub(r"""href=(["'])(.*?)\1""", sub, tag))
+                          lambda tag: re.sub(r"""(?<![\w-])href=(["'])(.*?)\1""", sub, tag))
 
 
 IMAGE_TYPES = {"image/png", "image/jpeg", "image/gif", "image/svg+xml", "image/webp", "image/avif"}
 
 
 def inline_images(html_text, base_path, repo_url, branch, note_rel, root):
-    """Relative <img src> becomes a data URI when the file is an image inside
-    root (the repository, or the note's directory outside a checkout);
-    otherwise a raw GitHub URL when the repository is known; otherwise it is
-    left alone. Nothing outside root is ever read, so a source such as
-    ../../.env cannot pull a file into the page."""
+    """Relative image sources (src, and the candidates of srcset) become data
+    URIs when the file is an image inside root (the repository, or the note's
+    directory outside a checkout); otherwise a raw GitHub URL when the
+    repository is known; otherwise they are left alone. Nothing outside root
+    is ever read, so a source such as ../../.env cannot pull a file into the
+    page."""
     base_dir = os.path.dirname(os.path.realpath(base_path))
     root = os.path.realpath(root)
 
-    def sub(m):
-        q, src = m.group(1), m.group(2)
-        if re.match(r"^(?:[a-z][a-z0-9+.-]*:|#|/)", src, re.I):
-            return m.group(0)
-        src, suffix = re.match(r"([^?#]*)(.*)", src).groups()
-        if not src:
-            return m.group(0)
-        local = os.path.realpath(os.path.join(base_dir, unquote(src)))
+    def resolve(raw):
+        """Return (replacement, is_data) for one relative source, or
+        (None, False) to leave it as the author wrote it."""
+        if re.match(r"^(?:[a-z][a-z0-9+.-]*:|#|/)", raw, re.I):
+            return None, False
+        path, suffix = re.match(r"([^?#]*)(.*)", raw).groups()
+        if not path:
+            return None, False
+        local = os.path.realpath(os.path.join(base_dir, unquote(path)))
         inside = os.path.commonpath([root, local]) == root
         mime = mimetypes.guess_type(local)[0] or ""
         if inside and os.path.isfile(local) and mime in IMAGE_TYPES:
             data = base64.b64encode(open(local, "rb").read()).decode("ascii")
-            return f'src={q}data:{mime};base64,{data}{q}'
+            return f"data:{mime};base64,{data}", True
         if not inside:
-            print(f"image left as written (outside the repository): {src}", file=sys.stderr)
-            return m.group(0)
+            print(f"image left as written (outside the repository): {path}", file=sys.stderr)
+            return None, False
         if repo_url:
-            return f'src={q}{gh_url(repo_url, "raw", branch, repo_path(note_rel, src))}{html.escape(suffix, quote=True)}{q}'
-        print(f"image left relative (no image file at {src})", file=sys.stderr)
-        return m.group(0)
+            return gh_url(repo_url, "raw", branch, repo_path(note_rel, path)) + suffix, False
+        print(f"image left relative (no image file at {path})", file=sys.stderr)
+        return None, False
 
-    return transform_tags(html_text, {"img", "source"},
-                          lambda tag: re.sub(r"""src=(["'])(.*?)\1""", sub, tag))
+    def sub_src(m):
+        q, raw = m.group(1), html.unescape(m.group(2))
+        new, _ = resolve(raw)
+        return m.group(0) if new is None else f'src={q}{html.escape(new, quote=True)}{q}'
+
+    def sub_srcset(m):
+        """A candidate list cannot carry a data URI, because the comma in
+        "data:...;base64," ends the candidate. When a candidate would inline,
+        drop the whole attribute so the inlined src governs."""
+        q, raw = m.group(1), html.unescape(m.group(2))
+        out, changed = [], False
+        for cand in raw.split(","):
+            parts = cand.split()
+            if not parts:
+                continue
+            new, is_data = resolve(parts[0])
+            if is_data:
+                print("srcset dropped: its candidates cannot be inlined, the img src carries the image",
+                      file=sys.stderr)
+                return ""
+            if new is not None:
+                parts[0], changed = new, True
+            out.append(" ".join(parts))
+        if not changed:
+            return m.group(0)
+        return f'srcset={q}{html.escape(", ".join(out), quote=True)}{q}'
+
+    def one_tag(tag):
+        tag = re.sub(r"""(?<![\w-])src=(["'])(.*?)\1""", sub_src, tag)
+        return re.sub(r"""(?<![\w-])srcset=(["'])(.*?)\1""", sub_srcset, tag)
+
+    return transform_tags(html_text, {"img", "source"}, one_tag)
 
 
 def mark(cls, word):
@@ -338,38 +375,47 @@ def table_of_contents(body):
 # ----------------------------------------------------------------------------
 # the page
 
-CSS = r"""
-:root{
+LIGHT_VARS = r"""
   --bg:#F6F7F9; --surface:#FFFFFF; --ink:#171A21; --ink-2:#525A6B; --rule:#D8DCE4; --rule-2:#E9ECF2;
   --accent:#1F4FD8; --accent-soft:#E6ECFB;
   --est:#146C5B; --est-bg:#E1F1EB; --inf:#8A5300; --inf-bg:#F6ECD9; --spec:#5C43A8; --spec-bg:#ECE7F8;
   --rec:#8F3A5B; --rec-bg:#F7E4EC;
   --fig-1:#1F4FD8; --fig-2:#CBD3E2; --fig-3:#D9A441;
-  --band-ws:var(--fig-1); --band-sens:var(--fig-2); --band-motor:var(--fig-3);
   --code-bg:#EEF1F6;
-  --font-display:'Newsreader',Georgia,'Times New Roman',serif;
-  --font-body:'Source Sans 3','Segoe UI',Helvetica,Arial,sans-serif;
-  --font-mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   color-scheme:light;
-}
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    --bg:#0F1218; --surface:#161A23; --ink:#E6E9F0; --ink-2:#A4AAB9; --rule:#2B3242; --rule-2:#212735;
-    --accent:#8AA6FF; --accent-soft:#1C2745;
-    --est:#63D2B4; --est-bg:#12312A; --inf:#E9B45C; --inf-bg:#3A2B10; --spec:#BCA6F8; --spec-bg:#2A2244;
-    --rec:#F0A2C0; --rec-bg:#3E1E2C;
-    --fig-1:#5E7FF0; --fig-2:#3A4356; --fig-3:#C99A3F; --code-bg:#1D2230;
-    color-scheme:dark;
-  }
-}
-:root[data-theme="dark"]{
+"""
+
+DARK_VARS = r"""
   --bg:#0F1218; --surface:#161A23; --ink:#E6E9F0; --ink-2:#A4AAB9; --rule:#2B3242; --rule-2:#212735;
   --accent:#8AA6FF; --accent-soft:#1C2745;
   --est:#63D2B4; --est-bg:#12312A; --inf:#E9B45C; --inf-bg:#3A2B10; --spec:#BCA6F8; --spec-bg:#2A2244;
   --rec:#F0A2C0; --rec-bg:#3E1E2C;
   --fig-1:#5E7FF0; --fig-2:#3A4356; --fig-3:#C99A3F; --code-bg:#1D2230;
   color-scheme:dark;
-}
+"""
+
+FONT_VARS = r"""
+  --font-display:'Newsreader',Georgia,'Times New Roman',serif;
+  --font-body:'Source Sans 3','Segoe UI',Helvetica,Arial,sans-serif;
+  --font-mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+"""
+
+
+def palette(theme):
+    """The colour rules for the chosen theme. Light is the default: the page
+    reads the same for everyone unless the host explicitly asks for dark.
+    "auto" is the only setting that follows the reader's system preference.
+    Either way an explicit data-theme on the root element still wins."""
+    light, dark = ":root{" + LIGHT_VARS + FONT_VARS + "}", ":root{" + DARK_VARS + FONT_VARS + "}"
+    if theme == "dark":
+        return dark + '\n:root[data-theme="light"]{' + LIGHT_VARS + "}"
+    out = light
+    if theme == "auto":
+        out += '\n@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){' + DARK_VARS + "}}"
+    return out + '\n:root[data-theme="dark"]{' + DARK_VARS + "}"
+
+
+CSS = r"""
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.6 var(--font-body);-webkit-font-smoothing:antialiased}
 a{color:var(--accent);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}
@@ -517,7 +563,7 @@ def build(args):
     page = []
     page.append("<title>" + html.escape(args.title or title) + "</title>")
     page.append(FONTS)
-    page.append("<style>" + CSS + "</style>")
+    page.append("<style>" + palette(args.theme) + CSS + "</style>")
     page.append('<div class="page">')
     page.append('<header class="mast">')
     page.append('<p class="eyebrow">' + "".join(f"<span>{e}</span>" for e in eyebrow) + "</p>")
@@ -567,6 +613,9 @@ def main(argv=None):
     ap.add_argument("--figures", help="sidecar JSON listing figures (default: <note>.figures.json if present)")
     ap.add_argument("--for", dest="for_reader", help='reader named in the eyebrow, e.g. "TC, the operator"')
     ap.add_argument("--project", help="project named in the eyebrow (default: the repository name)")
+    ap.add_argument("--theme", choices=["light", "dark", "auto"], default="light",
+                    help="page theme: light (default), dark, or auto to follow the reader's "
+                         "system setting. An explicit data-theme on the root element always wins.")
     ap.add_argument("--preview", action="store_true", help="also write a standalone .preview.html")
     build(ap.parse_args(argv))
 

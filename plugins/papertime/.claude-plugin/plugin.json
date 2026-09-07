@@ -1,7 +1,7 @@
 {
   "name": "papertime",
-  "version": "1.1.0",
-  "description": "Write research answers as dated reading notes in the ATR house format: answer first, a provenance block, every claim marked established, inferred, recalled or speculation, every number with its scale and baseline, no em dashes, a 2,000-word ceiling, and a closing section that says what remains and what needs the operator's decision. Ships the format, the voice rules, a template, a mechanical checker and a page builder that turns the note into a designed, theme-aware HTML page. Skill invokes as papertime:papertime (or /papertime when the skill directory is vendored into a repository).",
+  "version": "1.2.0",
+  "description": "Write any body of material as a dated reading note: answer first, a provenance block, every claim marked established, inferred, recalled or speculation, every number with its scale and a baseline, no em dashes, a 2,000-word ceiling, and a closing section that says what remains and what needs the operator's decision. Content agnostic, with a research special case. Ships the format, the voice rules, a template, a worked example, a mechanical checker and a page builder that turns the note into a designed HTML page. Skill invokes as papertime:papertime (or /papertime when the skill directory is vendored into a repository).",
   "author": {
     "name": "Thom Conaty",
     "email": "thomconatydesign@gmail.com"
@@ -11,12 +11,12 @@
   "keywords": [
     "papertime",
     "reading-note",
+    "briefing",
     "research",
     "writing",
     "operator",
     "provenance",
     "epistemic-marks",
-    "html-page",
-    "ATR"
+    "html-page"
   ]
 }
