@@ -216,12 +216,10 @@ IMAGE_TYPES = {"image/png", "image/jpeg", "image/gif", "image/svg+xml", "image/w
 
 
 def inline_images(html_text, base_path, repo_url, branch, note_rel, root):
-    """Relative image sources (src, and the candidates of srcset) become data
-    URIs when the file is an image inside root (the repository, or the note's
-    directory outside a checkout); otherwise a raw GitHub URL when the
-    repository is known; otherwise they are left alone. Nothing outside root
-    is ever read, so a source such as ../../.env cannot pull a file into the
-    page."""
+    """Relative img src values become data URIs for images inside root.
+    Relative srcset candidates become raw GitHub URLs when repository context
+    exists and otherwise stay relative. Nothing outside root is ever read, so
+    a source such as ../../.env cannot pull a file into the page."""
     base_dir = os.path.dirname(os.path.realpath(base_path))
     root = os.path.realpath(root)
 

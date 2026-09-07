@@ -40,7 +40,7 @@ def test_default_theme_is_fixed_white_light():
 
         page.main([str(note), "--out", str(output)])
         built = output.read_text(encoding="utf-8")
-        assert "--bg:#FFFFFF" in built, built[:500]
+        assert "<style>:root{\n  --bg:#FFFFFF" in built, built[:500]
         assert "@media (prefers-color-scheme: dark)" not in built, built[:1000]
 
 
