@@ -32,9 +32,9 @@ Warnings (exit status 0 unless --strict):
     with a bold lead-in; a closing section whose body is missing one of its
     four questions; a body with no claim marked established or inferred; a
     provenance block that does not state the marking convention or does not
-    say whether anything was run; a standfirst with no date; a body longer
-    than the ceiling (2,000 words over the head and every section except
-    Sources, fenced code excluded).
+    say whether anything was run, computed or measured; a standfirst with no
+    date; a body longer than the ceiling (2,000 words over the head and every
+    section except Sources, fenced code excluded).
 
 Marks. The checker counts the words established, inferred, an inference,
 speculation and recalled in the body prose (outside code spans, fenced
@@ -314,11 +314,15 @@ def check_text(path, text, register_text=None, allow=()):
             if word not in prov_text:
                 rep.warn(f'the provenance block does not state the marking convention (missing "{word}")', i0)
                 break
-        if not re.search(r"\b(was|were|is|are)\s+(not\s+)?run\b|\b(i|we)\s+(also\s+)?ran\b"
-                         r"|\b(i|we)\s+(did|do)\s+not\s+run\b|\b(did|do|does)\s+not\s+run\b"
-                         r"|\b(have|has|had)\s+not\s+(been\s+)?run\b|\bnothing\s+(here\s+)?was\s+run"
-                         r"|\bno\s+(commands?|code|scripts?|measurements?)\s+(was|were)\s+run\b", prov_text):
-            rep.warn("the provenance block does not say whether anything was run", i0)
+        if not re.search(r"\b(was|were|is|are)\s+(not\s+)?(?:run|computed|measured)\b"
+                         r"|\b(i|we)\s+(also\s+)?(?:ran|computed|measured)\b"
+                         r"|\b(i|we)\s+(did|do)\s+not\s+(?:run|compute|measure)\b"
+                         r"|\b(did|do|does)\s+not\s+(?:run|compute|measure)\b"
+                         r"|\b(have|has|had)\s+not\s+(been\s+)?(?:run|computed|measured)\b"
+                         r"|\bnothing\s+(here\s+)?was\s+(?:run|computed|measured)"
+                         r"|\bno\s+(commands?|code|scripts?|measurements?|calculations?)\s+"
+                         r"(was|were)\s+(?:run|computed|measured)\b", prov_text):
+            rep.warn("the provenance block does not say whether anything was run, computed, or measured", i0)
 
     # Sections.
     def find(pred):
@@ -334,9 +338,8 @@ def check_text(path, text, register_text=None, allow=()):
         return None
 
     def is_sources(title):
-        """The Sources section, not a question that happens to say "source":
-        the heading itself opens with the word, once any numbering is off."""
-        return re.match(r"^sources?\b", re.sub(r"^\d+[.)]?\s*", "", title.strip())) is not None
+        """The exact Source or Sources heading, once any numbering is off."""
+        return re.fullmatch(r"sources?", re.sub(r"^\d+[.)]?\s*", "", title.strip())) is not None
 
     if not sections:
         rep.error("no level-two sections (## heading)")
@@ -517,18 +520,22 @@ def self_test():
     others = GOOD.replace("Nothing here was run.", "The authors ran three experiments.")
     rep = check_text("GOOD_NOTE_2026-09-05.md", others)
     assert any("was run" in m for _, m in rep.warnings), rep.render()
-    mine = GOOD.replace("Nothing here was run.", "I ran the listing command once.")
-    rep = check_text("GOOD_NOTE_2026-09-05.md", mine)
-    assert not any("was run" in m for _, m in rep.warnings), rep.render()
+    for statement in (
+        "I ran the listing command once.",
+        "I did not run any commands.",
+        "I computed the totals from the ledger.",
+        "Nothing was computed for this note.",
+        "I measured the response time.",
+        "Nothing was measured for this note.",
+    ):
+        rep = check_text("GOOD_NOTE_2026-09-05.md", GOOD.replace("Nothing here was run.", statement))
+        assert not any("whether anything was" in m for _, m in rep.warnings), (statement, rep.render())
     urls = GOOD.replace("The fact is established.",
                         "The fact is established, per [the source](https://example.test/H999) and <a href=\"x/EXP_777\">y</a>.")
     rep = check_text("GOOD_NOTE_2026-09-05.md", urls, "| H1 |")
     assert not rep.errors, rep.render()
 
     # Active-voice "did not run", a fake standfirst date, Setext headings, code in the closing.
-    active = GOOD.replace("Nothing here was run.", "I did not run any commands.")
-    rep = check_text("GOOD_NOTE_2026-09-05.md", active)
-    assert not any("was run" in m for _, m in rep.warnings), rep.render()
     fake = GOOD.replace("written 2026-09-05", "against the 2024 benchmark")
     rep = check_text("GOOD_NOTE_2026-09-05.md", fake)
     assert any("when the note was written" in m for _, m in rep.warnings), rep.render()
@@ -557,13 +564,13 @@ def self_test():
     assert rep.marks["established"] == 1, rep.marks
 
     # A question heading that says "source" is not the Sources section.
-    sourceish = GOOD.replace("## 2. The question", "## 2. Which data source should we use?").replace(
+    sourceish = GOOD.replace("## 2. The question", "## 2. Sources of delay?").replace(
         "The fact is established. The reading is inferred, not measured.",
-        "The fact is established. The reading is inferred, not measured. " + "word " * 2100)
+        "The fact is established. The reading is inferred, not measured. " + "word " * 2100).replace(
+        "\n## Sources\n\n- The record.\n", "")
     rep = check_text("GOOD_NOTE_2026-09-05.md", sourceish)
-    assert not rep.errors, rep.render()
+    assert any('no "Sources" section' in m for _, m in rep.errors), rep.render()
     assert any("ceiling" in m for _, m in rep.warnings), rep.render()
-    assert not any("should be the last section" in m for _, m in rep.warnings), rep.render()
     assert rep.words > 2000, rep.words
 
     # Length, head included.

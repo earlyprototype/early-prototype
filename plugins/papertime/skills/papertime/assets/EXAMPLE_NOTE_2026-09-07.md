@@ -2,13 +2,13 @@
 
 *A reading note written 2026-09-07 for the operator of a six person team, in answer to three questions asked in a one to one on 2026-09-03: what the meeting costs, what a written update would and would not replace, and what to do about the two people who say the meeting is the only time they hear from the rest of the team. There is no earlier document on this, so the note stands alone.*
 
-> **Provenance.** The meeting's length and attendance were read from the shared team calendar for the twelve weeks to 2026-09-04. The team's size and roles were read from the team page on the same day. What people say about the meeting comes from my notes on the four one to ones held in August 2026. Nothing was run or measured for this note: there was no survey and no timing exercise. Each claim is marked as established (read today from a source named here), inferred (reasoned from established facts), recalled (general knowledge, not checked today), or speculation.
+> **Provenance.** The meeting's length and attendance were read from the shared team calendar for the twelve weeks to 2026-09-04. The team's size and roles were read from the team page on the same day. The division of meeting time comes from my notes on four Thursday status meetings held in August 2026. What people say about the meeting comes from my notes on the four one to ones held in August 2026. The 80-minute total, the 8 hours across six people and the percentage of working time were computed from those cited figures. No code was run and no new measurements were taken for this note: there was no survey or timing exercise. Each claim is marked as established (read today from a source named here), inferred (reasoned from established facts), recalled (general knowledge, not checked today), or speculation.
 
 ---
 
 ## 1. The answers in brief
 
-**The meeting costs about 8 hours of the team's time each week, a little over 3 percent of the six people's 240 working hours.** Fifty minutes of scheduled time, plus ten minutes each person spends preparing and twenty minutes most people need to return to interrupted work, comes to 80 minutes each. That total is inferred from calendar times and an ordinary estimate of the cost of an interruption, not measured here. Section 2 has the details.
+**The meeting costs about 8 hours of the team's time each week, a little over 3 percent of the six people's 240 working hours.** The meeting was booked for 45 minutes but ran for a median of 50. Adding ten minutes each person spends preparing and twenty minutes most people need to return to interrupted work comes to 80 minutes each. That total is inferred from calendar times and an ordinary estimate of the cost of an interruption, not measured here. Section 2 has the details.
 
 **A written update replaces the reporting but not the noticing.** Almost everything said in the meeting could be written down instead: the state of each piece of work, and what is blocked. What a document cannot do is let someone hear a hesitation and ask about it. Section 3 has the details.
 
@@ -16,7 +16,7 @@
 
 ## 2. What the meeting costs
 
-The direct cost is the smaller half. The calendar shows the meeting booked for 45 minutes and running to a median of 50 across the twelve weeks, with all six people present at 10 of the 12 sittings. That is established from the calendar. The table sets the direct cost beside the cost of the interruption, which appears on no calendar. Each figure is minutes per person per week.
+The direct meeting time is the larger share: 50 of the 80 minutes per person per week. The calendar shows the meeting booked for 45 minutes and running to a median of 50 across the twelve weeks, with all six people present at 10 of the 12 sittings. That is established from the calendar. The table sets the direct cost beside the cost of the interruption, which appears on no calendar. Each figure is minutes per person per week.
 
 | Cost | Minutes | Where the figure comes from |
 |---|---|---|
@@ -29,7 +29,7 @@ Two limits on those numbers. The 20 minutes for returning to work is recalled ra
 
 ## 3. What a written update replaces
 
-The reporting moves cleanly. Of the 50 minutes, roughly 35 are people saying what they finished and what comes next, which is established from my notes on the four sittings I recorded in August. That content survives being written down and gains from it: it becomes searchable, and the people who miss the meeting stop being told everything twice.
+The reporting moves cleanly. Of the 50 minutes, roughly 35 are people saying what they finished and what comes next, which is established from my notes on four Thursday status meetings held in August. That content survives being written down and gains from it: it becomes searchable, and the people who miss the meeting stop being told everything twice.
 
 The remaining 15 minutes are the part that does not survive. They are questions asked because of how something was said, and the small negotiations that follow. Whether 15 minutes of that is worth 8 hours is the operator's judgement rather than mine, and the answer probably depends on how much of the team's work crosses between people in a given month. Speculation, offered as a way to test that: in a month where two people share a system the meeting earns its cost, and in a month where six people are on six things it does not.
 
@@ -59,4 +59,5 @@ What needs the operator's decision:
 
 - The shared team calendar, twelve weeks to 2026-09-04.
 - The team page, read 2026-09-07.
+- My notes on four Thursday status meetings held in August 2026.
 - My notes on four one to ones held in August 2026.

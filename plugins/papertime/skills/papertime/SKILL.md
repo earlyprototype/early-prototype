@@ -1,6 +1,15 @@
 ---
 name: papertime
-description: Papertime. Turn a body of material into a reading note: an operator-facing document that leads with the answer, marks how every claim is known, and ends with what remains and what needs a decision. It is content agnostic, and works on a paper, a codebase, a meeting, a dataset, a plan, a product, a market or an archive. Use whenever the user asks a question that deserves a written answer rather than a chat reply, asks for a note, briefing, primer, explainer, write-up, comparison, summary or decision memo, asks "how different is X from Y", "should we do X", "what is going on with Y", "where does this sit", or asks to turn an answer you already gave into a document or a page. Triggers on "papertime", "/papertime", "paper time", "paper format", "reading note". Also use when asked to check an existing note against the format, to rebuild a note's page, or when a repository's rules say operator-facing answers land as reading notes. Reach for it even when the user does not say "note": a multi-part question with a knowledgeable but non-specialist reader is this skill's case.
+description: >-
+  Use when a user asks for papertime, paper time, paper format, a reading note,
+  briefing, primer, explainer, write-up, comparison, summary or decision memo;
+  asks to turn an answer into a document or page; asks to check a note or
+  rebuild its page; or when repository rules require operator-facing reading
+  notes. Also use for a multi-part question that deserves a written answer for
+  a knowledgeable non-specialist, including "how different is X from Y",
+  "should we do X", "what is going on with Y" and "where does this sit". The
+  material can be a paper, codebase, meeting, dataset, plan, product, market or
+  archive.
 ---
 
 # Papertime
@@ -36,15 +45,19 @@ rule; the format is the same for every note.
   it, check the listing rather than assuming the file exists, quote the
   wording rather than paraphrasing from memory.
 - Anything you could not check today is recalled, not established. If you
-  ran or measured something, say what it was and what kind of check it was.
+  ran, computed or measured something, say what it was and what kind of check
+  it was.
 - Do not restate the source at length. Point to it and say what is new.
 - Correct the reader's premise where it is wrong, plainly and early, then
   answer the question they meant.
-- Where a project allocates identifiers centrally in a register file
-  (hypothesis numbers, experiment identifiers, ticket numbers), use only
-  identifiers that already have a row there. A note proposes, the register
-  allocates. The checker verifies this with `--register`, and `--allow`
-  names tokens that look like identifiers but are not.
+- Where a project allocates identifiers centrally in a register file, use
+  only identifiers that already have a row there. A note proposes, the
+  register allocates. With `--register`, the checker verifies `H` followed by
+  digits and an optional lowercase suffix (for example `H12a`), and `EXP_`
+  followed by three digits and optional alphanumeric or hyphenated suffixes
+  (for example `EXP_012b-run`). Check ADRs, tickets and other identifier
+  schemes against their registers manually. `--allow` names H-number or
+  `EXP_`-shaped tokens that are not identifiers.
 
 ## Before writing
 
@@ -91,19 +104,20 @@ relative to:
 
 ```bash
 python3 "${CLAUDE_PLUGIN_ROOT}/skills/papertime/scripts/check_note.py" docs/MY_NOTE_2026-09-07.md \
-    [--register path/to/REGISTER.md] [--allow ADR14,H100] [--strict]
+    [--register path/to/REGISTER.md] [--allow H100] [--strict]
 ```
 
 `--self-test` runs the checker's own tests.
 
 It fails on em dashes in prose, on missing structural parts (title,
 standfirst, provenance block, the answers-in-brief section, the closing
-section, sources) and, when a register is given, on any identifier in prose
-that has no register row. It warns on em dashes inside code, en dashes,
-arrows, exclamation marks, a bad file name, sections out of order, a lead-in
-without bold, a closing section missing one of its four questions, a
-provenance block that does not say whether anything was run, missing marks
-and a note over the 2,000-word ceiling. Fix what it reports and run it
+section, sources) and, when a register is given, on any supported H-number or
+`EXP_` identifier in prose that has no register row. Other identifier schemes
+need a manual check. It warns on em dashes inside code, en dashes, arrows,
+exclamation marks, a bad file name, sections out of order, a lead-in without
+bold, a closing section missing one of its four questions, a provenance block
+that does not say whether anything was run, computed or measured, missing
+marks and a note over the 2,000-word ceiling. Fix what it reports and run it
 again; a clean run is the bar for publishing or committing. The checker is
 mechanical and cannot judge the writing; reread the note once as the reader
 would, and find the sentence a smart outsider would stumble on.
@@ -117,15 +131,17 @@ scrolling table container:
 ```bash
 python3 -m pip install markdown   # once per environment
 python3 "${CLAUDE_PLUGIN_ROOT}/skills/papertime/scripts/build_note_page.py" docs/MY_NOTE_2026-09-07.md \
-    --out /tmp/my_note.html --title "Short Name" --for "the operator" --project "My project" --preview
+    --out /tmp/my_note.html --title "Short Name" --for "the operator" --project "My project" \
+    --theme light --preview
 ```
 
 Give `--title` a short, specific name (two to four words) for the browser tab
 and gallery; the page's heading still carries the note's full title. `--for`
-and `--project` fill the line above the title and may be left out. The page
-renders light for every reader, whatever their system setting; pass
-`--theme dark` for a dark page or `--theme auto` to follow the reader's
-setting instead. Relative links are rewritten to the repository's GitHub
+and `--project` fill the line above the title and may be left out. Use
+`--theme light`, with its white `#FFFFFF` background, unless the user asks for
+another theme. Light is also the default and never follows the reader's
+system setting; `--theme dark` makes a dark page and `--theme auto` follows
+the system setting. Relative links are rewritten to the repository's GitHub
 URLs on the branch currently checked out, and relative images are inlined;
 pass `--repo-url`, `--branch` and `--source-path` when the note is not in a
 checkout, and rebuild with `--branch main` once it has merged. `--preview`

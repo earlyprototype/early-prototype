@@ -216,16 +216,14 @@ IMAGE_TYPES = {"image/png", "image/jpeg", "image/gif", "image/svg+xml", "image/w
 
 
 def inline_images(html_text, base_path, repo_url, branch, note_rel, root):
-    """Relative image sources (src, and the candidates of srcset) become data
-    URIs when the file is an image inside root (the repository, or the note's
-    directory outside a checkout); otherwise a raw GitHub URL when the
-    repository is known; otherwise they are left alone. Nothing outside root
-    is ever read, so a source such as ../../.env cannot pull a file into the
-    page."""
+    """Relative img src values become data URIs for images inside root.
+    Relative srcset candidates become raw GitHub URLs when repository context
+    exists and otherwise stay relative. Nothing outside root is ever read, so
+    a source such as ../../.env cannot pull a file into the page."""
     base_dir = os.path.dirname(os.path.realpath(base_path))
     root = os.path.realpath(root)
 
-    def resolve(raw):
+    def resolve(raw, inline=True):
         """Return (replacement, is_data) for one relative source, or
         (None, False) to leave it as the author wrote it."""
         if re.match(r"^(?:[a-z][a-z0-9+.-]*:|#|/)", raw, re.I):
@@ -236,7 +234,7 @@ def inline_images(html_text, base_path, repo_url, branch, note_rel, root):
         local = os.path.realpath(os.path.join(base_dir, unquote(path)))
         inside = os.path.commonpath([root, local]) == root
         mime = mimetypes.guess_type(local)[0] or ""
-        if inside and os.path.isfile(local) and mime in IMAGE_TYPES:
+        if inline and inside and os.path.isfile(local) and mime in IMAGE_TYPES:
             data = base64.b64encode(open(local, "rb").read()).decode("ascii")
             return f"data:{mime};base64,{data}", True
         if not inside:
@@ -244,6 +242,8 @@ def inline_images(html_text, base_path, repo_url, branch, note_rel, root):
             return None, False
         if repo_url:
             return gh_url(repo_url, "raw", branch, repo_path(note_rel, path)) + suffix, False
+        if not inline:
+            return None, False
         print(f"image left relative (no image file at {path})", file=sys.stderr)
         return None, False
 
@@ -253,20 +253,15 @@ def inline_images(html_text, base_path, repo_url, branch, note_rel, root):
         return m.group(0) if new is None else f'src={q}{html.escape(new, quote=True)}{q}'
 
     def sub_srcset(m):
-        """A candidate list cannot carry a data URI, because the comma in
-        "data:...;base64," ends the candidate. When a candidate would inline,
-        drop the whole attribute so the inlined src governs."""
+        """Keep candidate lists usable: rewrite local candidates to raw
+        repository URLs when possible, otherwise leave them relative."""
         q, raw = m.group(1), html.unescape(m.group(2))
         out, changed = [], False
         for cand in raw.split(","):
             parts = cand.split()
             if not parts:
                 continue
-            new, is_data = resolve(parts[0])
-            if is_data:
-                print("srcset dropped: its candidates cannot be inlined, the img src carries the image",
-                      file=sys.stderr)
-                return ""
+            new, _ = resolve(parts[0], inline=False)
             if new is not None:
                 parts[0], changed = new, True
             out.append(" ".join(parts))
@@ -376,7 +371,7 @@ def table_of_contents(body):
 # the page
 
 LIGHT_VARS = r"""
-  --bg:#F6F7F9; --surface:#FFFFFF; --ink:#171A21; --ink-2:#525A6B; --rule:#D8DCE4; --rule-2:#E9ECF2;
+  --bg:#FFFFFF; --surface:#FFFFFF; --ink:#171A21; --ink-2:#525A6B; --rule:#D8DCE4; --rule-2:#E9ECF2;
   --accent:#1F4FD8; --accent-soft:#E6ECFB;
   --est:#146C5B; --est-bg:#E1F1EB; --inf:#8A5300; --inf-bg:#F6ECD9; --spec:#5C43A8; --spec-bg:#ECE7F8;
   --rec:#8F3A5B; --rec-bg:#F7E4EC;

@@ -16,7 +16,7 @@ Everything in the format serves that reader.
   asked, when, for whom, and where the note sits among the documents the
   reader already has.
 - A provenance block saying where each class of material came from, whether
-  anything was run, and how claims are marked.
+  anything was run, computed or measured, and how claims are marked.
 - "The answers in brief": one bold lead-in per question, so a reader who stops
   there has the answers.
 - One numbered section per question, answer first, evidence next, limits last,
@@ -33,7 +33,9 @@ Everything in the format serves that reader.
 The format is content agnostic. A short section at the top of the skill
 carries the extra directions a research note needs: keeping a source trail,
 verifying what can be verified, and using only identifiers a register has
-already allocated.
+already allocated. The checker can verify H-numbers such as `H12a` and
+experiment identifiers such as `EXP_012b-run`; ADRs, tickets and other
+identifier schemes need a manual register check.
 
 ## What ships
 
@@ -44,8 +46,8 @@ already allocated.
 | Voice | `skills/papertime/references/voice.md` | The rules for writing to the operator. |
 | Template | `skills/papertime/assets/TEMPLATE_NOTE.md` | A skeleton to start from. |
 | Example | `skills/papertime/assets/EXAMPLE_NOTE_2026-09-07.md` | A complete note on an ordinary subject, clean under `--strict`. |
-| Checker | `skills/papertime/scripts/check_note.py` | Fails on em dashes in prose, missing structural parts and, given an identifier register, unregistered identifiers; warns on the rest, including a note over the word ceiling. |
-| Page builder | `skills/papertime/scripts/build_note_page.py` | Turns the note into a designed HTML page with a section list, scrolling tables, tagged claims, rewritten links, inlined images and optional figures. Needs the `markdown` package. |
+| Checker | `skills/papertime/scripts/check_note.py` | Fails on em dashes in prose, missing structural parts and, given an identifier register, unregistered H-number or `EXP_` identifiers; warns on the rest, including a note over the word ceiling. |
+| Page builder | `skills/papertime/scripts/build_note_page.py` | Turns the note into a designed HTML page with a white light default, optional dark and auto themes, a section list, scrolling tables, tagged claims, rewritten links, usable `srcset` candidates, inlined ordinary images and optional figures. Needs the `markdown` package. |
 
 ## Install
 
@@ -63,19 +65,21 @@ directory is vendored into a repository's `.claude/skills/`.
 ## Use the scripts on their own
 
 ```bash
-python3 skills/papertime/scripts/check_note.py docs/MY_NOTE_2026-09-07.md --register path/to/REGISTER.md --allow ADR14
+python3 skills/papertime/scripts/check_note.py docs/MY_NOTE_2026-09-07.md --register path/to/REGISTER.md --allow H100
 python3 -m pip install markdown
 python3 skills/papertime/scripts/build_note_page.py docs/MY_NOTE_2026-09-07.md \
-    --out /tmp/my_note.html --title "Short Name" --for "the operator" --preview
+    --out /tmp/my_note.html --title "Short Name" --for "the operator" --theme light --preview
 ```
 
 The checker exits 1 on errors and 0 otherwise (`--strict` makes warnings
 errors; `--self-test` runs its own tests). The builder writes a page body
 ready for a hosted artifact and, with `--preview`, a standalone file for a
-local browser. Pages render light for every reader unless `--theme dark` or
-`--theme auto` says otherwise. Inside a git checkout the builder links to the
-branch checked out; pass `--branch main` after the note merges, and
-`--repo-url` plus `--source-path` when the note is not in a checkout.
+local browser. Light is the default and uses a white `#FFFFFF` background
+without following the reader's system setting; use `--theme dark` or
+`--theme auto` only when another theme is wanted. Inside a git checkout the
+builder links to the branch checked out; pass `--branch main` after the note
+merges, and `--repo-url` plus `--source-path` when the note is not in a
+checkout.
 
 ## Worked example
 
@@ -93,14 +97,17 @@ errors and no warnings, so it also serves as a regression fixture.
 
 ## Changes
 
+- 1.2.1: valid skill frontmatter; accurate H-number and `EXP_` register
+  checking guidance; exact Source or Sources heading detection; run, compute
+  and measure provenance wording; preserved `srcset` candidates; a fixed
+  white light page by default; and corrected arithmetic and provenance in the
+  worked example.
 - 1.2.0: the format is content agnostic, and the research directions are
   compacted into one special-case section at the top of the skill; every
   reference to a particular project, repository or file is gone from the
   skill, and the worked example is a self-contained note that ships with the
-  plugin; pages render light by default, with `--theme dark` and
-  `--theme auto`; link queries are no longer double-escaped, `srcset`
-  candidates are handled, and the word ceiling counts the real Sources
-  section rather than the first heading that says "source".
+  plugin; theme selection and `srcset` handling were added to the page
+  builder, and link queries are no longer double-escaped.
 - 1.1.0: a fourth mark, recalled, for knowledge not checked against a source
   today; a 2,000-word ceiling with a per-part guide; the checker and the
   builder share one definition of a mark and report the same counts; the

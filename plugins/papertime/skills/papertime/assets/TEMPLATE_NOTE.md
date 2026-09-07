@@ -2,7 +2,7 @@
 
 *A reading note written <YYYY-MM-DD> for <the reader>, in answer to <how many> questions asked <where>: <question one>; <question two>; <question three>. It sits beside <the document the reader already has>, which <what that document does>, and does not repeat it. <Or: There is nothing for it to sit beside, so it stands alone.>*
 
-> **Provenance.** <Which class of material> was read from <which files, pages, people or listings> on <date>. <Another class> was read from <its source>. <Nothing was run or measured for this note. | What was run: <commands or measurements>, each a <what kind of check>, not a <what it is not>.> Each claim is marked as established (read today from a source named here), inferred (reasoned from established facts), recalled (general knowledge, not checked today), or speculation.
+> **Provenance.** <Which class of material> was read from <which files, pages, people or listings> on <date>. <Another class> was read from <its source>. <Nothing was run, computed or measured for this note. | What was run, computed or measured: <commands, calculations or measurements>, each a <what kind of check>, not a <what it is not>.> Each claim is marked as established (read today from a source named here), inferred (reasoned from established facts), recalled (general knowledge, not checked today), or speculation.
 
 ---
 
