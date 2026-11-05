@@ -38,16 +38,24 @@ jobs:
         run: python plugins/kanbanger/tests/smoke_mcp.py
       - name: Install current Claude CLI on ephemeral runner
         run: npm install -g @anthropic-ai/claude-code@latest
-      - name: Validate and install local marketplace plugin with native Claude CLI
+      - name: Validate and install GitHub marketplace plugin in one native Claude CLI command
         shell: bash
         env:
           CLAUDE_CONFIG_DIR: ${{ runner.temp }}/kanbanger-claude-config
+          MARKETPLACE_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
+          MARKETPLACE_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
+          ACCEPTANCE_EVENT: ${{ github.event_name }}
+          ACCEPTANCE_REF: ${{ github.ref }}
         run: |
           claude --version
           claude plugin validate .
           claude plugin validate plugins/kanbanger
-          claude plugin marketplace add "$GITHUB_WORKSPACE" --scope project
-          claude plugin install kanbanger@early-prototype --scope project
+          marketplace_source="${MARKETPLACE_REPOSITORY}#${MARKETPLACE_REVISION}"
+          if [[ "$ACCEPTANCE_EVENT" == "push" && "$ACCEPTANCE_REF" == "refs/heads/main" ]]; then
+            marketplace_source="earlyprototype/early-prototype"
+          fi
+          printf 'Testing remote marketplace source: %s\n' "$marketplace_source"
+          claude plugin install kanbanger --marketplace "$marketplace_source" --scope project
           claude plugin list --json > "$RUNNER_TEMP/kanbanger-installed.json"
           node - <<'JS'
           const fs = require('fs');

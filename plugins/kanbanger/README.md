@@ -31,7 +31,15 @@ optional; local boards work without them.
 
 ## Install in Claude Code
 
-In an interactive Claude Code session:
+With the [requirements](#requirements) installed, use one command in an
+interactive Claude Code **2.1.275+** session:
+
+```text
+/plugin install kanbanger --marketplace earlyprototype/early-prototype
+```
+
+Accept the normal marketplace confirmation and complete installation in the
+plugin panel. For older Claude versions, use the two-step fallback:
 
 ```text
 /plugin marketplace add earlyprototype/early-prototype
@@ -180,8 +188,11 @@ Credentials are deliberately absent from the manifest.
 The smoke workflow launches this actual pinned command through native MCP on
 Ubuntu and Windows with scratch workspaces and **simulated host interpolation**.
 It checks setup, configuration preservation, restart, isolation and REVIEW gates.
-Separate native Claude CLI steps validate the marketplace and plugin, install
-from the local checkout at project scope, and inspect the installed-plugin list.
+Separate native Claude CLI steps validate the local marketplace and plugin,
+install directly from GitHub with one `claude plugin install kanbanger
+--marketplace <source>` command (CLI **2.1.292+**), and inspect the enabled
+installed-plugin version. PR checks select that PR's exact source revision;
+post-merge main pushes check the canonical default-branch marketplace route.
 Those steps make no model calls and supply no API keys or authentication bypass.
 This test does not establish installed-IDE startup on a particular laptop.
 Check the workflow result for runtime evidence; the presence of test code is

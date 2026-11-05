@@ -25,6 +25,18 @@ The lifecycle commands and hooks maintain kanban state and handoffs. For a sessi
 
 ## Install
 
+For **Kanbanger in Claude Code 2.1.275+**, install with one interactive command:
+
+```text
+/plugin install kanbanger --marketplace earlyprototype/early-prototype
+```
+
+Accept the normal marketplace confirmation and complete installation in the
+plugin panel. Kanbanger requires uv/uvx and Git on the host's `PATH`, with Python
+3.10+ available or downloadable by uv. See its [guide](plugins/kanbanger/README.md).
+The two-step route below remains available for older Claude versions and the
+other plugins:
+
 ```bash
 # 1. Register this marketplace (once)
 /plugin marketplace add earlyprototype/early-prototype
