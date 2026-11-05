@@ -2,7 +2,7 @@
 
 A personal **plugin marketplace** for Claude Code and Codex. Each plugin's guide lists its host requirements.
 
-Ships six plugins:
+Ships seven plugins:
 
 - **`early-prototype`** — the **timeteam** suite: Product/PM/Worker session lifecycle as installable skills, hooks, and an agent.
 - **`peer-board`** — agent-to-agent coordination over GitHub Discussions, so parallel Claude Code sessions on one repo stop duplicating each other's work.
@@ -10,6 +10,8 @@ Ships six plugins:
 - **`papertime`** — a skill that turns any body of material into a dated reading note (answer first, provenance, marked claims, a 2,000-word ceiling, a closing decision section), with a checker for structure and registered H-number or `EXP_` identifiers and an HTML builder whose default page is fixed light on white.
 - **`baton`** — an explicitly invoked session handover: the main agent briefs a subagent, the subagent writes with bundled DrDoc guidance, and the main agent reviews the result.
 - **`graphtime`** — persistent Project Knowledge Map opt-in for one Codex project, using an existing Knowledge Graph Kit checkout.
+
+- **`kanbanger`** — Claude Code MCP plugin for per-project markdown kanban boards and a REVIEW completion gate; [manual MCP setup for Cursor and Codex](plugins/kanbanger/README.md#manual-mcp-setup) is documented separately.
 
 ## What it gives you (in 30 seconds)
 
@@ -23,6 +25,18 @@ The lifecycle commands and hooks maintain kanban state and handoffs. For a sessi
 
 ## Install
 
+For **Kanbanger in Claude Code 2.1.275+**, install with one interactive command:
+
+```text
+/plugin install kanbanger --marketplace earlyprototype/early-prototype
+```
+
+Accept the normal marketplace confirmation and complete installation in the
+plugin panel. Kanbanger requires uv/uvx and Git on the host's `PATH`, with Python
+3.10+ available or downloadable by uv. See its [guide](plugins/kanbanger/README.md).
+The two-step route below remains available for older Claude versions and the
+other plugins:
+
 ```bash
 # 1. Register this marketplace (once)
 /plugin marketplace add earlyprototype/early-prototype
@@ -33,6 +47,7 @@ The lifecycle commands and hooks maintain kanban state and handoffs. For a sessi
 /plugin install dewormer@early-prototype
 /plugin install papertime@early-prototype
 /plugin install baton@early-prototype
+/plugin install kanbanger@early-prototype
 ```
 
 For Graphtime in Codex, run `codex plugin marketplace add earlyprototype/early-prototype`
@@ -40,6 +55,8 @@ and `codex plugin add graphtime@early-prototype`. If the marketplace is already
 registered, refresh it with `codex plugin marketplace upgrade early-prototype`.
 See the [Graphtime guide](plugins/graphtime/README.md) for the required toolkit and
 the short personal `$graphtime` invocation.
+
+Kanbanger requires Claude Code for marketplace installation. It supplies 11 MCP tools, invoked through the assistant, and adds no skills or slash commands. See its [guide](plugins/kanbanger/README.md) for first use and separate Cursor/Codex setup.
 
 After installing, skills are namespaced under the plugin:
 
@@ -80,8 +97,11 @@ early-prototype/                      # marketplace repository
     │   └── skills/papertime/        # instructions, references, assets, scripts
     ├── baton/
     │   └── skills/baton/            # instructions, invocation policy, DrDoc
-    └── graphtime/
-        └── skills/graphtime/        # project activation instructions and policy
+    ├── graphtime/
+    │   └── skills/graphtime/        # project activation instructions and policy
+    └── kanbanger/
+        ├── .claude-plugin/plugin.json # Claude Code MCP server launch
+        └── README.md               # first use and manual host setup
 ```
 
 ### peer-board in one paragraph
@@ -97,6 +117,9 @@ Substance carries itself, so prose should never label itself. A sentence saying 
 A question worth answering in writing lands as a dated markdown note, not a chat reply: title, italic standfirst, a provenance block saying where each class of material came from and whether anything was run, computed or measured, the answers in brief, one section per question with every term defined in its sentence and every number carrying its scale and a baseline, claims marked inline as established, inferred, recalled or speculation, at most 2,000 words, and a closing section that says what happened, what it means, what remains and what needs the operator's decision. The format is content agnostic, so the material can be a paper, a codebase, a month of meetings, a spreadsheet or a supplier's quotation, and a short section carries the extra directions a research note needs. `papertime` carries the format and the voice rules, a template, a worked example, a checker that fails on em dashes, missing parts and unregistered H-number or `EXP_` identifiers when a register is supplied, and a builder that renders the note as HTML with a fixed white light default plus optional dark and auto themes. Other identifier schemes need a manual register check. The markdown file governs; the page is a view. Detail in [`plugins/papertime/README.md`](plugins/papertime/README.md).
 
 ## Dependencies
+
+**kanbanger**
+- **Claude Code**, **uv/uvx and Git** on the host process's `PATH`; Python 3.10+ must be available or downloadable by uv. First launch fetches pinned source and dependencies. No separate global Kanbanger installation is required; see the [Kanbanger guide](plugins/kanbanger/README.md#requirements).
 
 **graphtime**
 - **Codex, Python 3 and Git**, plus an existing **Knowledge Graph Kit** checkout containing `core/map_activation.py`. The toolkit is not bundled; see the [requirements](plugins/graphtime/README.md#requirements).
@@ -124,3 +147,4 @@ A question worth answering in writing lands as a dated markdown note, not a chat
 - The `Dewormer` output style is opt-in. Installing the plugin does not switch it on; pick it in `/config` under **Output style**, or set `"outputStyle": "Dewormer"` in a settings file.
 - Plugins execute code (hooks). Only install marketplaces you trust.
 - The early-prototype lifecycle suite stores session state in each project's `.claude/` folder (markers, inbox, notes). Graphtime uses `.project-map/` for map state and `.codex/hooks.json` for its project hook.
+
