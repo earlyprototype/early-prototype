@@ -144,7 +144,7 @@ async def check_lifecycle(server, project, process_cwd):
     title = "Packaged A task"
     async with connect(server, project, process_cwd) as session:
         added = await call(session, "add_task", {"title": title, "column": "TODO"})
-        assert added["success"] is True
+        assert added == f"Successfully added task '{title}' to TODO", added
         assert title in (await call(session, "list_tasks"))["TODO"]
         await call(session, "move_task", {
             "title": title, "from_column": "TODO", "to_column": "DONE",
@@ -153,7 +153,9 @@ async def check_lifecycle(server, project, process_cwd):
         moved = await call(session, "move_task", {
             "title": title, "from_column": "TODO", "to_column": "DOING",
         })
-        assert moved["success"] is True
+        assert moved == f"Successfully moved '{title}' from TODO to DOING", moved
+        tasks = await call(session, "list_tasks")
+        assert title in tasks["DOING"] and title not in tasks["TODO"]
         proposed = await call(session, "propose_done", {"title": title})
         assert proposed["success"] is True
         tasks = await call(session, "list_tasks")
@@ -193,7 +195,7 @@ async def main():
             await check_lifecycle(server, a, process_cwd)
             async with connect(server, b, process_cwd) as session:
                 added = await call(session, "add_task", {"title": "Packaged B task"})
-                assert added["success"] is True
+                assert added == "Successfully added task 'Packaged B task' to TODO", added
             for project, own, other in ((a, "Packaged A task", "Packaged B task"),
                                         (b, "Packaged B task", "Packaged A task")):
                 async with connect(server, project, process_cwd) as session:
