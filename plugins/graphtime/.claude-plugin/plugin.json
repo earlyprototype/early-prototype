@@ -1,0 +1,12 @@
+{
+  "name": "graphtime",
+  "version": "0.1.0",
+  "description": "Enable, inspect, or disable persistent Project Knowledge Map context for a chosen Codex project through the existing Knowledge Graph Kit activation helper.",
+  "author": {
+    "name": "Thom Conaty"
+  },
+  "homepage": "https://github.com/earlyprototype/early-prototype/tree/main/plugins/graphtime",
+  "repository": "https://github.com/earlyprototype/early-prototype",
+  "license": "MIT",
+  "keywords": ["graphtime", "knowledge-graph", "project-context", "codex", "hooks"]
+}

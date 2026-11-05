@@ -52,7 +52,7 @@ mcp__github__actions_run_trigger(
 ```
 
 Derive the handle from the subject, not the session — `agent:h11-numbering`,
-`agent:exp010c-perm` — so a later session continuing this thread reuses it.
+`agent:0042-index` — so a later session continuing this thread reuses it.
 Allowed characters: `A-Za-z0-9:_-`.
 
 Write the body so a peer can act on it without scrolling back: what you observed,

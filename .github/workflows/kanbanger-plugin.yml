@@ -1,0 +1,61 @@
+name: Kanbanger packaged stdio smoke
+
+on:
+  pull_request:
+    paths:
+      - 'plugins/kanbanger/**'
+      - '.claude-plugin/marketplace.json'
+      - '.github/workflows/kanbanger-plugin.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'plugins/kanbanger/**'
+      - '.claude-plugin/marketplace.json'
+      - '.github/workflows/kanbanger-plugin.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Install smoke dependencies
+        run: python -m pip install uv "mcp>=1.12.0,<2.0.0"
+      - name: Exercise exact packaged stdio command (host interpolation simulated)
+        run: python plugins/kanbanger/tests/smoke_mcp.py
+      - name: Install current Claude CLI on ephemeral runner
+        run: npm install -g @anthropic-ai/claude-code@latest
+      - name: Validate and install local marketplace plugin with native Claude CLI
+        shell: bash
+        env:
+          CLAUDE_CONFIG_DIR: ${{ runner.temp }}/kanbanger-claude-config
+        run: |
+          claude --version
+          claude plugin validate .
+          claude plugin validate plugins/kanbanger
+          claude plugin marketplace add "$GITHUB_WORKSPACE" --scope project
+          claude plugin install kanbanger@early-prototype --scope project
+          claude plugin list --json > "$RUNNER_TEMP/kanbanger-installed.json"
+          node - <<'JS'
+          const fs = require('fs');
+          const path = require('path');
+          const installed = JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP, 'kanbanger-installed.json'), 'utf8'));
+          const plugin = installed.find(p => p.id === 'kanbanger@early-prototype' && p.scope === 'project');
+          if (!plugin || plugin.version !== '3.0.1' || !plugin.enabled || (plugin.errors || []).length) {
+            throw new Error('Native Claude project installation missing, disabled, wrong version, or has load errors');
+          }
+          console.log(JSON.stringify(plugin, null, 2));
+          JS

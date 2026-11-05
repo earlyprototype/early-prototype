@@ -1,0 +1,22 @@
+{
+  "name": "papertime",
+  "version": "1.2.1",
+  "description": "Write any body of material as a dated reading note: answer first, sourced provenance, marked claims, numbers with scale and a baseline, a 2,000-word ceiling, and a closing decision section. Content agnostic, with a research special case. Ships the format, voice rules, template, worked example, a structural checker with H-number and EXP_ register checks, and an HTML page builder with a fixed white light default plus dark and auto themes. Skill invokes as papertime:papertime (or /papertime when vendored into a repository).",
+  "author": {
+    "name": "Thom Conaty",
+    "email": "thomconatydesign@gmail.com"
+  },
+  "homepage": "https://github.com/earlyprototype/early-prototype",
+  "repository": "https://github.com/earlyprototype/early-prototype",
+  "keywords": [
+    "papertime",
+    "reading-note",
+    "briefing",
+    "research",
+    "writing",
+    "operator",
+    "provenance",
+    "epistemic-marks",
+    "html-page"
+  ]
+}

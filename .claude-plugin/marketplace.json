@@ -23,21 +23,6 @@
       ]
     },
     {
-      "name": "kanbanger",
-      "source": "./plugins/kanbanger",
-      "description": "MCP kanban board for mixed human/agent work — agents propose, a REVIEW gate keeps DONE human-approved, optional GitHub Projects sync. Per-project boards in plain markdown (_kanban.md), 11 tools.",
-      "version": "3.0.0",
-      "category": "productivity",
-      "keywords": [
-        "kanban",
-        "mcp",
-        "tasks",
-        "review-gate",
-        "github-projects",
-        "agents"
-      ]
-    },
-    {
       "name": "peer-board",
       "source": "./plugins/peer-board",
       "description": "Agent-to-agent coordination over GitHub Discussions — agents open threads, join, reply, sign off and close, and read back who is in a thread and whether anyone replied. Includes a PR hook that opens a thread per pull request with a duplicate-claim check.",
@@ -51,6 +36,71 @@
         "duplicate-work",
         "code-review"
       ]
+    },
+    {
+      "name": "dewormer",
+      "source": "./plugins/dewormer",
+      "description": "Strips performed-quality tics from Claude's prose. Optional Dewormer output style plus a dewormer skill carrying the full ~90-term caution list across nine families: anthropomorphised code-speak, self-important spotlighting, performative candor, unsolicited validation, adverb inflation, the em-dash reframe, hedging connective tissue, metaphor soup, and sign-off tics.",
+      "version": "0.2.0",
+      "category": "writing",
+      "keywords": [
+        "voice",
+        "output-style",
+        "writing",
+        "prose",
+        "sycophancy",
+        "llm-tells",
+        "plain-english"
+      ]
+    },
+    {
+      "name": "papertime",
+      "source": "./plugins/papertime",
+      "description": "Any body of material as a dated reading note: answer first, sourced provenance, marked claims, numbers with scale and a baseline, a 2,000-word ceiling, and a closing decision section. Content agnostic, with a research special case. Ships the format, voice rules, template, worked example, a structural checker with H-number and EXP_ register checks, and an HTML page builder with a fixed white light default plus dark and auto themes.",
+      "version": "1.2.1",
+      "category": "writing",
+      "keywords": [
+        "papertime",
+        "reading-note",
+        "research",
+        "briefing",
+        "writing",
+        "operator",
+        "provenance",
+        "epistemic-marks",
+        "html-page"
+      ]
+    },
+    {
+      "name": "baton",
+      "source": "./plugins/baton",
+      "description": "Explicit session handovers: a subagent writes with bundled DrDoc guidance, asks the main agent for missing context, and returns the handover for review.",
+      "version": "1.0.1",
+      "category": "productivity",
+      "keywords": ["baton", "handover", "drdoc", "documentation", "subagent"]
+    },
+    {
+      "name": "graphtime",
+      "source": "./plugins/graphtime",
+      "description": "Enable, inspect, or disable persistent Project Knowledge Map context for a chosen Codex project. Requires an existing Knowledge Graph Kit checkout with its activation helper; Codex hook trust remains the owner's step.",
+      "version": "0.1.0",
+      "category": "productivity",
+      "keywords": ["graphtime", "knowledge-graph", "project-context", "codex", "hooks"]
+    },
+    {
+      "name": "kanbanger",
+      "source": "./plugins/kanbanger",
+      "description": "Claude Code MCP plugin for per-project markdown kanban boards, a REVIEW completion gate, and optional GitHub Projects sync. Separate manual MCP setup documented for Cursor and Codex.",
+      "version": "3.0.1",
+      "category": "productivity",
+      "keywords": [
+        "kanban",
+        "mcp",
+        "tasks",
+        "review-gate",
+        "claude-code"
+      ]
     }
   ]
 }
+
