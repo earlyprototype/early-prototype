@@ -22,7 +22,7 @@
       "command": "uvx",
       "args": [
         "--from",
-        "git+https://github.com/earlyprototype/kanbanger.git@27389e6a590f282d9bca2b07061d803682d0687f",
+        "git+https://github.com/earlyprototype/kanbanger.git@3bc97ea40e699a1f5b4b7a2f299d709b6875070d",
         "kanbanger-mcp"
       ],
       "env": {

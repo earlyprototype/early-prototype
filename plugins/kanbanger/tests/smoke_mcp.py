@@ -23,7 +23,7 @@ TOOLS = {
     "get_sync_status", "propose_done", "approve_done", "reject_review",
     "setup_project", "doctor",
 }
-SOURCE_SHA = "27389e6a590f282d9bca2b07061d803682d0687f"
+SOURCE_SHA = "3bc97ea40e699a1f5b4b7a2f299d709b6875070d"
 
 
 def launch_config():
@@ -143,6 +143,13 @@ async def check_setup(server, project, process_cwd, original):
 async def check_lifecycle(server, project, process_cwd):
     title = "Packaged A task"
     async with connect(server, project, process_cwd) as session:
+        before = (project / "_kanban.md").read_bytes()
+        await call(session, "add_task", {
+            "title": "Forbidden direct DONE task", "column": "DONE",
+        }, expected_error="gate_violation")
+        assert (project / "_kanban.md").read_bytes() == before, "Rejected add-to-DONE changed board bytes"
+        tasks = await call(session, "list_tasks")
+        assert all("Forbidden direct DONE task" not in titles for titles in tasks.values())
         added = await call(session, "add_task", {"title": title, "column": "TODO"})
         assert added == f"Successfully added task '{title}' to TODO", added
         assert title in (await call(session, "list_tasks"))["TODO"]

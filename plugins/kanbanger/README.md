@@ -62,6 +62,14 @@ skills or slash commands. Ask the assistant to call the tools by name.
 3. Restart the session to load project guidance, then run `doctor` again and
    confirm the workspace and board belong to this project.
 
+This wrapper pins the board workspace to Claude's project directory. Opening
+a nested folder as a separate project selects that folder and does not search
+for a parent board. To use a parent's board, open its folder as the Claude
+project; for a manual MCP route, set the explicit workspace to that parent.
+Run `doctor` **before** `setup_project` to confirm this choice. Changing a tool's
+working directory within the session does not change the pin. Walk-up discovery
+applies only when no explicit workspace pin is configured.
+
 No standalone executable or extra project MCP registration is needed. If the
 plugin becomes unavailable, re-enable or reinstall it, reconnect, and rerun
 `setup_project`. Explicit `setup_project(install_mode="plugin")` is also supported;
@@ -106,7 +114,7 @@ Create or update the project's `.cursor/mcp.json`:
       "command": "uvx",
       "args": [
         "--from",
-        "git+https://github.com/earlyprototype/kanbanger.git@27389e6a590f282d9bca2b07061d803682d0687f",
+        "git+https://github.com/earlyprototype/kanbanger.git@3bc97ea40e699a1f5b4b7a2f299d709b6875070d",
         "kanbanger-mcp"
       ],
       "env": {
@@ -131,7 +139,7 @@ paths with the intended workspace; TOML literal strings preserve Windows slashes
 ```toml
 [mcp_servers.kanbanger]
 command = "uvx"
-args = ["--from", "git+https://github.com/earlyprototype/kanbanger.git@27389e6a590f282d9bca2b07061d803682d0687f", "kanbanger-mcp"]
+args = ["--from", "git+https://github.com/earlyprototype/kanbanger.git@3bc97ea40e699a1f5b4b7a2f299d709b6875070d", "kanbanger-mcp"]
 cwd = 'C:\Users\you\Projects\Project With Spaces'
 
 [mcp_servers.kanbanger.env]
@@ -149,11 +157,18 @@ placeholder or rely on a plugin cache directory as the working directory.
 
 ## GitHub sync (optional)
 
-The server reads `GITHUB_TOKEN`, `GITHUB_REPO` (`owner/name`) and optionally
-`GITHUB_PROJECT_NUMBER` from its environment or a local, gitignored `.env`.
-Use credentials with access to the target repository and Projects V2 board.
-Keep secrets in local configuration, never committed manifests. Without sync
-configuration the board remains fully usable locally.
+MCP sync requires `GITHUB_TOKEN` and `GITHUB_REPO` (`owner/name`) in the server
+process environment for its preflight check. Supply them through the launching
+host's private configuration or inherited environment, then restart/reconnect
+the server. `GITHUB_PROJECT_NUMBER` is optional. A workspace `.env` alone does
+not satisfy this MCP preflight.
+
+The standalone `kanban-sync` CLI loads workspace `.env` values with override
+enabled. The child CLI used by MCP sync retains that behavior after preflight,
+so `.env` can still override values for that child. Keep any local `.env` values
+consistent with the intended target. Use credentials with access to the target
+repository and Projects V2 board; keep secrets in private configuration, never
+committed manifests. Local boards work without sync credentials.
 
 ## Update and uninstall
 
@@ -174,10 +189,10 @@ See the [official Claude plugin commands](https://code.claude.com/docs/en/plugin
 ## How it launches and is verified
 
 Wrapper version **3.0.1** pins upstream source version **3.0.0** at
-`27389e6a590f282d9bca2b07061d803682d0687f`:
+`3bc97ea40e699a1f5b4b7a2f299d709b6875070d`:
 
 ```sh
-uvx --from git+https://github.com/earlyprototype/kanbanger.git@27389e6a590f282d9bca2b07061d803682d0687f kanbanger-mcp
+uvx --from git+https://github.com/earlyprototype/kanbanger.git@3bc97ea40e699a1f5b4b7a2f299d709b6875070d kanbanger-mcp
 ```
 
 The manifest sets `KANBANGER_WORKSPACE=${CLAUDE_PROJECT_DIR}` and
