@@ -43,6 +43,7 @@ jobs:
         env:
           CLAUDE_CONFIG_DIR: ${{ runner.temp }}/kanbanger-claude-config
           MARKETPLACE_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
+          MARKETPLACE_REF: ${{ github.event.pull_request.head.ref || github.ref_name }}
           MARKETPLACE_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
           ACCEPTANCE_EVENT: ${{ github.event_name }}
           ACCEPTANCE_REF: ${{ github.ref }}
@@ -50,16 +51,28 @@ jobs:
           claude --version
           claude plugin validate .
           claude plugin validate plugins/kanbanger
-          marketplace_source="${MARKETPLACE_REPOSITORY}#${MARKETPLACE_REVISION}"
+          marketplace_source="${MARKETPLACE_REPOSITORY}#${MARKETPLACE_REF}"
           if [[ "$ACCEPTANCE_EVENT" == "push" && "$ACCEPTANCE_REF" == "refs/heads/main" ]]; then
             marketplace_source="earlyprototype/early-prototype"
           fi
           printf 'Testing remote marketplace source: %s\n' "$marketplace_source"
           claude plugin install kanbanger --marketplace "$marketplace_source" --scope project
+          claude plugin marketplace list --json > "$RUNNER_TEMP/kanbanger-marketplaces.json"
           claude plugin list --json > "$RUNNER_TEMP/kanbanger-installed.json"
           node - <<'JS'
           const fs = require('fs');
           const path = require('path');
+          const { execFileSync } = require('child_process');
+          const marketplaces = JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP, 'kanbanger-marketplaces.json'), 'utf8'));
+          const marketplace = marketplaces.find(m => m.name === 'early-prototype');
+          if (!marketplace || !marketplace.installLocation) {
+            throw new Error('Remote marketplace has no documented installLocation to verify');
+          }
+          const actualRevision = execFileSync('git', ['-C', marketplace.installLocation, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+          if (actualRevision !== process.env.MARKETPLACE_REVISION) {
+            throw new Error(`Remote marketplace revision mismatch: expected ${process.env.MARKETPLACE_REVISION}, got ${actualRevision}; branch or tag may have moved`);
+          }
+          console.log(`Verified remote marketplace revision: ${actualRevision}`);
           const installed = JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP, 'kanbanger-installed.json'), 'utf8'));
           const plugin = installed.find(p => p.id === 'kanbanger@early-prototype' && p.scope === 'project');
           if (!plugin || plugin.version !== '3.0.1' || !plugin.enabled || (plugin.errors || []).length) {
