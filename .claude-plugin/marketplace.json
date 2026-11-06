@@ -91,7 +91,7 @@
       "name": "kanbanger",
       "source": "./plugins/kanbanger",
       "description": "Claude Code MCP plugin for per-project markdown kanban boards, a REVIEW completion gate, and optional GitHub Projects sync. Separate manual MCP setup documented for Cursor and Codex.",
-      "version": "3.0.1",
+      "version": "3.0.2",
       "category": "productivity",
       "keywords": [
         "kanban",

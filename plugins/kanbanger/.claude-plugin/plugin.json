@@ -1,6 +1,6 @@
 {
   "name": "kanbanger",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "description": "MCP kanban board for mixed human/agent work — agents propose, a REVIEW gate keeps DONE human-approved, optional GitHub Projects sync. Per-project boards in plain markdown (_kanban.md), 11 tools.",
   "author": {
     "name": "Thom Conaty",
@@ -22,7 +22,7 @@
       "command": "uvx",
       "args": [
         "--from",
-        "git+https://github.com/earlyprototype/kanbanger.git@3bc97ea40e699a1f5b4b7a2f299d709b6875070d",
+        "git+https://github.com/earlyprototype/kanbanger.git@f3cfc3df9b4b0169c5b214324f8a05b127e1e9ae",
         "kanbanger-mcp"
       ],
       "env": {

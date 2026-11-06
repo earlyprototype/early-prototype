@@ -86,7 +86,7 @@ and no longer needed. Inspect malformed files manually; do not overwrite them.
 
 ## Use
 
-- "Add a task: wire up export" → `add_task`
+- "Add a task: wire up export" → `add_task` in TODO by default
 - "What is in review?" → `list_tasks`
 - "Propose the parser task as done" → `propose_done`
 - After explicit user approval → `approve_done`
@@ -94,6 +94,13 @@ and no longer needed. Inspect malformed files manually; do not overwrite them.
 
 For binding or configuration problems, call `doctor`. Its default `network=false`
 does not contact GitHub; `network=true` also checks GitHub connectivity.
+
+### Task columns
+
+New agreed tasks go to **TODO** by default, regardless of priority.
+**BACKLOG** is only for work the user explicitly pauses or defers; not having
+started a task does not mean it is paused. **DOING** is active work.
+**REVIEW** awaits human approval before **DONE**.
 
 ## Manual MCP setup
 
@@ -114,7 +121,7 @@ Create or update the project's `.cursor/mcp.json`:
       "command": "uvx",
       "args": [
         "--from",
-        "git+https://github.com/earlyprototype/kanbanger.git@3bc97ea40e699a1f5b4b7a2f299d709b6875070d",
+        "git+https://github.com/earlyprototype/kanbanger.git@f3cfc3df9b4b0169c5b214324f8a05b127e1e9ae",
         "kanbanger-mcp"
       ],
       "env": {
@@ -139,7 +146,7 @@ paths with the intended workspace; TOML literal strings preserve Windows slashes
 ```toml
 [mcp_servers.kanbanger]
 command = "uvx"
-args = ["--from", "git+https://github.com/earlyprototype/kanbanger.git@3bc97ea40e699a1f5b4b7a2f299d709b6875070d", "kanbanger-mcp"]
+args = ["--from", "git+https://github.com/earlyprototype/kanbanger.git@f3cfc3df9b4b0169c5b214324f8a05b127e1e9ae", "kanbanger-mcp"]
 cwd = 'C:\Users\you\Projects\Project With Spaces'
 
 [mcp_servers.kanbanger.env]
@@ -172,12 +179,24 @@ committed manifests. Local boards work without sync credentials.
 
 ## Update and uninstall
 
+Updating the upstream Kanbanger repository or publishing a PyPI release does
+**not** automatically update this marketplace wrapper. It pins a tested source
+commit. The marketplace workflow validates that pin; it does not advance it.
+Maintainers update and test the pin and matching wrapper/catalog versions in a
+separate marketplace change. Installed copies then need a marketplace/plugin
+update, or a manual MCP source-pin update for Cursor/Codex.
+
 Run these in a terminal, then start a new Claude Code session:
 
 ```sh
 claude plugin marketplace update early-prototype
 claude plugin update kanbanger@early-prototype
 ```
+
+After loading the updated server, call `setup_project()` to refresh managed
+`CLAUDE.md`/`AGENTS.md` guidance, then reload the session to read that guidance.
+Check custom project instructions for older column rules. Setup preserves task
+positions; use MCP tools for any deliberate task moves.
 
 To uninstall, run `claude plugin uninstall kanbanger@early-prototype`, adding
 `--scope project` or `--scope local` if that is where you installed it. Your
@@ -188,11 +207,11 @@ See the [official Claude plugin commands](https://code.claude.com/docs/en/plugin
 
 ## How it launches and is verified
 
-Wrapper version **3.0.1** pins upstream source version **3.0.0** at
-`3bc97ea40e699a1f5b4b7a2f299d709b6875070d`:
+Wrapper version **3.0.2** pins upstream source version **3.0.0** at
+`f3cfc3df9b4b0169c5b214324f8a05b127e1e9ae`:
 
 ```sh
-uvx --from git+https://github.com/earlyprototype/kanbanger.git@3bc97ea40e699a1f5b4b7a2f299d709b6875070d kanbanger-mcp
+uvx --from git+https://github.com/earlyprototype/kanbanger.git@f3cfc3df9b4b0169c5b214324f8a05b127e1e9ae kanbanger-mcp
 ```
 
 The manifest sets `KANBANGER_WORKSPACE=${CLAUDE_PROJECT_DIR}` and

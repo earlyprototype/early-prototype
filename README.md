@@ -120,6 +120,7 @@ A question worth answering in writing lands as a dated markdown note, not a chat
 
 **kanbanger**
 - **Claude Code**, **uv/uvx and Git** on the host process's `PATH`; Python 3.10+ must be available or downloadable by uv. First launch fetches pinned source and dependencies. No separate global Kanbanger installation is required; see the [Kanbanger guide](plugins/kanbanger/README.md#requirements).
+- New agreed tasks default to **TODO**. **BACKLOG** is only for explicitly paused or deferred work. Upstream changes require a deliberate tested marketplace-pin update; see [updates](plugins/kanbanger/README.md#update-and-uninstall).
 
 **graphtime**
 - **Codex, Python 3 and Git**, plus an existing **Knowledge Graph Kit** checkout containing `core/map_activation.py`. The toolkit is not bundled; see the [requirements](plugins/graphtime/README.md#requirements).

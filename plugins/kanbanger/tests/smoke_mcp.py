@@ -23,7 +23,7 @@ TOOLS = {
     "get_sync_status", "propose_done", "approve_done", "reject_review",
     "setup_project", "doctor",
 }
-SOURCE_SHA = "3bc97ea40e699a1f5b4b7a2f299d709b6875070d"
+SOURCE_SHA = "f3cfc3df9b4b0169c5b214324f8a05b127e1e9ae"
 
 
 def launch_config():
@@ -33,7 +33,7 @@ def launch_config():
     assert len(names) == len(set(names)) == 7, "Expected seven unique plugins"
     assert set(names) == {"early-prototype", "peer-board", "dewormer", "papertime", "baton", "graphtime", "kanbanger"}
     entry = next(p for p in catalog["plugins"] if p["name"] == "kanbanger")
-    assert entry["version"] == plugin["version"] == "3.0.1"
+    assert entry["version"] == plugin["version"] == "3.0.2"
     assert entry["source"] == "./plugins/kanbanger"
     server = plugin["mcpServers"]["kanbanger"]
     assert server["command"] == "uvx"
