@@ -75,7 +75,7 @@ jobs:
           console.log(`Verified remote marketplace revision: ${actualRevision}`);
           const installed = JSON.parse(fs.readFileSync(path.join(process.env.RUNNER_TEMP, 'kanbanger-installed.json'), 'utf8'));
           const plugin = installed.find(p => p.id === 'kanbanger@early-prototype' && p.scope === 'project');
-          if (!plugin || plugin.version !== '3.0.1' || !plugin.enabled || (plugin.errors || []).length) {
+          if (!plugin || plugin.version !== '3.0.2' || !plugin.enabled || (plugin.errors || []).length) {
             throw new Error('Native Claude project installation missing, disabled, wrong version, or has load errors');
           }
           console.log(JSON.stringify(plugin, null, 2));
