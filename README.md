@@ -2,13 +2,14 @@
 
 A personal **plugin marketplace** for Claude Code and Codex. Each plugin's guide lists its host requirements.
 
-Ships seven plugins:
+Ships eight plugins:
 
 - **`early-prototype`** — the **timeteam** suite: Product/PM/Worker session lifecycle as installable skills, hooks, and an agent.
 - **`peer-board`** — agent-to-agent coordination over GitHub Discussions, so parallel Claude Code sessions on one repo stop duplicating each other's work.
 - **`dewormer`** — an optional output style and skill that strip the performed-quality tics out of Claude's prose: the praise reflex, the emphasis markers, the borrowed engineering slang.
 - **`papertime`** — a skill that turns any body of material into a dated reading note (answer first, provenance, marked claims, a 2,000-word ceiling, a closing decision section), with a checker for structure and registered H-number or `EXP_` identifiers and an HTML builder whose default page is fixed light on white.
 - **`baton`** — an explicitly invoked session handover: the main agent briefs a subagent, the subagent writes with bundled DrDoc guidance, and the main agent reviews the result.
+- **[DrDoc](plugins/drdoc/README.md)** keeps shared project docs current and reviews workstream docs for consistency and plain English.
 - **`graphtime`** — persistent Project Knowledge Map opt-in for one Codex project, using an existing Knowledge Graph Kit checkout.
 
 - **`kanbanger`** — Claude Code MCP plugin for per-project markdown kanban boards and a REVIEW completion gate; [manual MCP setup for Cursor and Codex](plugins/kanbanger/README.md#manual-mcp-setup) is documented separately.
@@ -47,6 +48,7 @@ other plugins:
 /plugin install dewormer@early-prototype
 /plugin install papertime@early-prototype
 /plugin install baton@early-prototype
+/plugin install drdoc@early-prototype
 /plugin install kanbanger@early-prototype
 ```
 
@@ -73,6 +75,7 @@ After installing, skills are namespaced under the plugin:
 - `/early-prototype:check-handoffs` — surface inbox
 - `/early-prototype:cleantime` — wipe all session state in this project
 - `/baton:baton` — create a reviewed session handover; see the [Baton installation notes](plugins/baton/README.md#install) for the short personal `/baton` command
+- `/drdoc:drdoc` starts a documentation upkeep session. For the short personal `/drdoc` command, see the [DrDoc guide](plugins/drdoc/README.md#install-and-use).
 - `$graphtime:graphtime` — enable, inspect or disable project context in Codex CLI
 
 ## What's inside
@@ -97,6 +100,8 @@ early-prototype/                      # marketplace repository
     │   └── skills/papertime/        # instructions, references, assets, scripts
     ├── baton/
     │   └── skills/baton/            # instructions, invocation policy, DrDoc
+    ├── drdoc/
+    │   └── skills/drdoc/            # documentation stewardship charter
     ├── graphtime/
     │   └── skills/graphtime/        # project activation instructions and policy
     └── kanbanger/
