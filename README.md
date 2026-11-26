@@ -84,7 +84,7 @@ early-prototype/                      # marketplace repository
 └── plugins/                         # each plugin has .claude-plugin/plugin.json
     ├── early-prototype/
     │   ├── skills/                  # Product / PM / Worker lifecycle
-    │   ├── hooks/                   # Stop, SessionStart and shared modules
+    │   ├── hooks/                   # PostToolUse, Stop, SessionStart and shared modules
     │   └── agents/kanban-worker.md
     ├── peer-board/
     │   ├── commands/                # board, board-install
@@ -131,6 +131,7 @@ A question worth answering in writing lands as a dated markdown note, not a chat
 **early-prototype**
 - **kanbanger MCP** — the lifecycle skills delegate kanban mutations to it. Without kanbanger, `worktime`/`chosetime`/`clocktime`/`queuetime` lose their kanban-side effect.
 - **Node.js** on `PATH` — the hooks are Node scripts.
+- For automatic GitHub Projects sync, use Node.js 20.12+ and put `kanban-sync` on the hook's `PATH`. Set `GITHUB_REPO` in the project's gitignored `.env`. Supply `GITHUB_TOKEN` there or in the hook environment. The hook starts one background sync per kanbanger mutation.
 
 **dewormer**
 - None. Markdown only, no hooks and no code.

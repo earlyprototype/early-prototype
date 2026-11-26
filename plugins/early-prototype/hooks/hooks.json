@@ -1,6 +1,19 @@
 {
-  "description": "timeteam (early-prototype) Product/PM/Worker lifecycle hooks. Stop drops handoffs; SessionStart surfaces unread handoffs.",
+  "description": "Lifecycle hooks write and surface handoffs and sync board mutations to GitHub Projects.",
   "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/kanban-github-sync.js\"",
+            "timeout": 120,
+            "async": true
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "matcher": "*",
