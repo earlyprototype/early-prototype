@@ -80,6 +80,14 @@
       "keywords": ["baton", "handover", "drdoc", "documentation", "subagent"]
     },
     {
+      "name": "drdoc",
+      "source": "./plugins/drdoc",
+      "description": "Keep shared project documentation current, review workstream docs for consistency and plain English, and prepare handovers.",
+      "version": "0.1.0",
+      "category": "writing",
+      "keywords": ["drdoc", "documentation", "onboarding", "handover", "decision-log"]
+    },
+    {
       "name": "graphtime",
       "source": "./plugins/graphtime",
       "description": "Enable, inspect, or disable persistent Project Knowledge Map context for a chosen Codex project. Requires an existing Knowledge Graph Kit checkout with its activation helper; Codex hook trust remains the owner's step.",

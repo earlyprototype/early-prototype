@@ -1,0 +1,12 @@
+{
+  "name": "drdoc",
+  "version": "0.1.0",
+  "description": "Keep shared project documentation current, review workstream docs for consistency and plain English, and prepare handovers.",
+  "author": {
+    "name": "Thom Conaty"
+  },
+  "homepage": "https://github.com/earlyprototype/early-prototype/tree/main/plugins/drdoc",
+  "repository": "https://github.com/earlyprototype/early-prototype",
+  "license": "MIT",
+  "keywords": ["drdoc", "documentation", "onboarding", "handover", "decision-log"]
+}

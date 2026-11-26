@@ -30,8 +30,8 @@ def launch_config():
     plugin = json.loads((ROOT / "plugins/kanbanger/.claude-plugin/plugin.json").read_text(encoding="utf-8"))
     catalog = json.loads((ROOT / ".claude-plugin/marketplace.json").read_text(encoding="utf-8"))
     names = [p["name"] for p in catalog["plugins"]]
-    assert len(names) == len(set(names)) == 7, "Expected seven unique plugins"
-    assert set(names) == {"early-prototype", "peer-board", "dewormer", "papertime", "baton", "graphtime", "kanbanger"}
+    assert len(names) == len(set(names)), "Duplicate marketplace plugin name"
+    assert set(names) == {"early-prototype", "peer-board", "dewormer", "papertime", "baton", "drdoc", "graphtime", "kanbanger"}
     entry = next(p for p in catalog["plugins"] if p["name"] == "kanbanger")
     assert entry["version"] == plugin["version"] == "3.0.2"
     assert entry["source"] == "./plugins/kanbanger"
