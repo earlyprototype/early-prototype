@@ -131,7 +131,7 @@ A question worth answering in writing lands as a dated markdown note, not a chat
 **early-prototype**
 - **kanbanger MCP** — the lifecycle skills delegate kanban mutations to it. Without kanbanger, `worktime`/`chosetime`/`clocktime`/`queuetime` lose their kanban-side effect.
 - **Node.js** on `PATH` — the hooks are Node scripts.
-- For automatic GitHub Projects sync, use Node.js 20.12+ and put `kanban-sync` on the hook's `PATH`. Set `GITHUB_REPO` in the project's gitignored `.env`. Supply `GITHUB_TOKEN` there or in the hook environment. The hook starts one background sync per kanbanger mutation.
+- For automatic GitHub Projects sync, use Node.js 20.12+ and install `kanban-sync` in an absolute `PATH` directory outside the project. Set `GITHUB_REPO` in the project's gitignored `.env`. Supply `GITHUB_TOKEN` there or in the hook environment. The mutation and Worker Stop hooks share one writer per board. Changes made during a sync trigger another pass.
 
 **dewormer**
 - None. Markdown only, no hooks and no code.

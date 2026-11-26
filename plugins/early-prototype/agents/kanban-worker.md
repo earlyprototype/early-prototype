@@ -49,9 +49,7 @@ Single-step:
 - `reject_review(title="Fix login", reason="needs more tests")`
 
 Multi-step (each step on its own conceptual line, separated by `then` or `;`):
-- `add_task(title="X", column="TODO") then sync_to_github()`
-- `propose_done(title="X") then approve_done(title="X") then sync_to_github()`
-- `move_task(title="X", from_column="TODO", to_column="DOING") then sync_to_github()`
+- `propose_done(title="X") then approve_done(title="X")`
 
 Execute each step in order. If any step returns ERR, **stop the sequence at that point** — do not proceed to later steps. Report what completed and what failed.
 
@@ -77,7 +75,7 @@ Don't try to recover or continue past an error — the caller decides what to do
 
 - **Don't ask clarifying questions.** The caller validated input before delegating.
 - **Don't retry on errors.** The caller decides whether to retry.
-- **Don't sync to GitHub implicitly.** `sync_to_github()` must be an explicit step in the input — if it's not in the instruction, don't call it.
+- Use `sync_to_github()` for a standalone sync request. The hook handles successful mutations.
 - **Don't touch filesystem state outside MCP.** No `active-task.txt`, no `pm-session.txt`, no notes, no logs, no `.md` files outside what kanbanger writes (`_kanban.md`).
 - **One MCP call per atomic instruction step.** Multi-step sequences chain them in order, one MCP call per step.
 - **No commentary.** Just OK/ERR lines.

@@ -1,9 +1,6 @@
 'use strict';
 
-const { spawnSync } = require('node:child_process');
-const fs = require('node:fs');
-const path = require('node:path');
-const { parseEnv } = require('node:util');
+const { syncBoard } = require('./lib/github-sync');
 
 const mutations = new Set([
   'add_task', 'move_task', 'delete_task', 'propose_done', 'approve_done', 'reject_review'
@@ -29,32 +26,21 @@ async function readEvent() {
   }
 }
 
+function rejected(result) {
+  if (typeof result === 'string') {
+    try { return rejected(JSON.parse(result)); } catch { return false; }
+  }
+  if (Array.isArray(result)) return result.some(rejected);
+  if (!result || typeof result !== 'object') return false;
+  return result.success === false || result.isError === true ||
+    rejected(result.structuredContent) || rejected(result.content) ||
+    (result.type === 'text' && rejected(result.text));
+}
+
 async function main() {
   const input = await readEvent();
-  if (!mutations.has(input?.tool_name || input?.tool)) return;
-
-  const cwd = process.env.CLAUDE_PROJECT_DIR || input.cwd || process.cwd();
-  const board = '_kanban.md';
-  const dotenv = path.join(cwd, '.env');
-  if (!fs.statSync(path.join(cwd, board), { throwIfNoEntry: false })?.isFile() ||
-      !fs.statSync(dotenv, { throwIfNoEntry: false })?.isFile()) return;
-
-  // The project selects the destination. The CLI reads .env with override enabled.
-  const config = parseEnv(fs.readFileSync(dotenv, 'utf8'));
-  const token = config.GITHUB_TOKEN ?? process.env.GITHUB_TOKEN;
-  if (!config.GITHUB_REPO?.trim() || !token?.trim()) return;
-
-  const result = spawnSync('kanban-sync', [board], {
-    cwd,
-    stdio: 'ignore',
-    windowsHide: true,
-    timeout: 110000,
-    killSignal: 'SIGKILL'
-  });
-  if (result.error || result.status !== 0) {
-    const reason = result.error?.code || result.signal || `exit ${result.status}`;
-    console.error(`[kanban-github-sync] kanban-sync failed (${reason}).`);
-  }
+  if (!mutations.has(input?.tool_name || input?.tool) || rejected(input.tool_response)) return;
+  await syncBoard(process.env.CLAUDE_PROJECT_DIR || input.cwd || process.cwd());
 }
 
 main().catch(() => console.error('[kanban-github-sync] Could not sync the project board.'));

@@ -7,11 +7,14 @@ const os = require('node:os');
 const path = require('node:path');
 const { after, before, beforeEach, test } = require('node:test');
 const { promisify } = require('node:util');
+const { setTimeout: delay } = require('node:timers/promises');
 
 const hooks = require('../hooks/hooks.json').hooks;
 const script = path.resolve(__dirname, '../hooks/kanban-github-sync.js');
+const stopScript = path.resolve(__dirname, '../hooks/worker-completion-signal.js');
 const mutation = { tool_name: 'mcp__kanbanger__add_task' };
 const config = 'export GITHUB_REPO = "example/board" # target\nGITHUB_TOKEN=test-only\n';
+const cli = process.platform === 'win32' ? 'kanban-sync.exe' : 'kanban-sync';
 let scratch, bin, project, board, dotenv, calls;
 
 before(() => {
@@ -19,7 +22,6 @@ before(() => {
   bin = path.join(scratch, 'bin');
   fs.mkdirSync(bin);
   // Node stands in for the CLI on both platforms. Its board argument runs the fixture below.
-  const cli = process.platform === 'win32' ? 'kanban-sync.exe' : 'kanban-sync';
   fs.copyFileSync(process.execPath, path.join(bin, cli));
 });
 
@@ -38,6 +40,100 @@ beforeEach(() => {
     process.exitCode = Number(process.env.CLI_STATUS || 0);
   `);
 });
+
+test('recognizes Python dotenv bindings and ignores empty expansions', () => {
+  fs.writeFileSync(dotenv, "export 'GITHUB_REPO'=example/board\n'GITHUB_TOKEN'=${MISSING:-offline}\n");
+  assert.equal(run(mutation), '');
+  assert.deepEqual(JSON.parse(fs.readFileSync(calls, 'utf8')), [project, board]);
+  fs.unlinkSync(calls);
+  for (const contents of [
+    'GITHUB_REPO=${MISSING}\nGITHUB_TOKEN=offline',
+    'COMMENT="first line\nGITHUB_REPO=example/board\n"\nGITHUB_TOKEN=offline',
+    'COMMENT="first line\nGITHUB_REPO=example/board\n" invalid\nGITHUB_TOKEN=offline',
+    'GITHUB_REPO= # no project selected\nGITHUB_TOKEN=offline'
+  ]) {
+    fs.writeFileSync(dotenv, contents);
+    assert.equal(run(mutation), '');
+    assert.equal(fs.existsSync(calls), false);
+  }
+});
+
+test('respects disabled dotenv loading even with an inherited GitHub target', () => {
+  assert.equal(run(mutation, { PYTHON_DOTENV_DISABLED: 'true', GITHUB_REPO: 'other/board' }), '');
+  assert.equal(fs.existsSync(calls), false);
+});
+
+test('rejected MCP results leave pending board changes private', () => {
+  const rejection = { success: false, error_code: 'gate_violation' };
+  const blocks = [{ type: 'text', text: JSON.stringify(rejection) }];
+  for (const tool_response of [rejection, JSON.stringify(rejection), blocks,
+    { content: blocks }, { structuredContent: rejection }, { isError: true }]) {
+    assert.equal(run({ ...mutation, tool_response }), '');
+  }
+  assert.equal(fs.existsSync(calls), false);
+});
+
+test('plain text and structured MCP successes each sync', () => {
+  for (const tool_response of ['Successfully added task A to TODO',
+    { content: [{ type: 'text', text: 'Successfully moved A to DOING' }] },
+    { structuredContent: { success: true } }]) {
+    assert.equal(run({ ...mutation, tool_response }), '');
+  }
+  assert.equal(fs.readFileSync(calls, 'utf8').trim().split('\n').length, 3);
+});
+
+test('uses an executable from an absolute PATH entry outside the project', () => {
+  const projectBin = path.join(project, 'bin');
+  fs.mkdirSync(projectBin);
+  for (const dir of [projectBin, project]) fs.copyFileSync(process.execPath, path.join(dir, cli));
+  fs.writeFileSync(board, "require('node:fs').writeFileSync('calls', process.execPath)");
+  const PATH = ['', '.', 'bin', projectBin, project, bin].join(path.delimiter);
+  assert.equal(run(mutation, { PATH }), '');
+  assert.equal(fs.readFileSync(calls, 'utf8'), path.join(bin, cli));
+});
+
+test('reports a missing Project status option once without exposing CLI output', () => {
+  fs.writeFileSync(board, `console.error("  WARNING: 'private status' has no matching Status option on the GitHub Project; item created with no Status. Sync will retry next run.");
+    console.error('private CLI detail');`);
+  const stderr = run(mutation);
+  assert.match(stderr, /^[^\r\n]*status[^\r\n]*\r?\n$/i);
+  assert.doesNotMatch(stderr, /private|test-only/);
+});
+
+function startHook(file, input, env) {
+  const done = promisify(execFile)(process.execPath, [file], {
+    cwd: project, timeout: 15000, env: { SystemRoot: process.env.SystemRoot,
+      PATH: bin, CLAUDE_PROJECT_DIR: project, ...env }
+  });
+  done.child.stdin.end(JSON.stringify(input));
+  return done;
+}
+
+for (const secondHook of ['PostToolUse', 'Stop']) {
+  test(`an overlapping ${secondHook} sync preserves both remote cards and their local IDs`, async () => {
+    const fake = path.join(__dirname, 'fixtures', 'overlap-cli.cjs').replaceAll(path.sep, '/');
+    const env = { NODE_OPTIONS: `--require="${fake}"` };
+    fs.writeFileSync(board, '## DOING\n*   [ ] A\n');
+    const first = startHook(script, mutation, { ...env, FIRST: '1' });
+    const deadline = Date.now() + 6000;
+    while (!fs.existsSync(path.join(project, 'snapshot')) && Date.now() < deadline) await delay(20);
+    assert.ok(fs.existsSync(path.join(project, 'snapshot')), 'first CLI took its snapshot');
+    fs.appendFileSync(board, '*   [ ] B\n');
+    if (secondHook === 'Stop') {
+      fs.mkdirSync(path.join(project, '.claude'), { recursive: true });
+      fs.writeFileSync(path.join(project, '.claude', 'active-task-abcd1234.txt'), 'B');
+    }
+    const second = secondHook === 'Stop' ? startHook(stopScript, { session_id: 'abcd1234' }, env)
+      : startHook(script, mutation, env);
+    await Promise.all([first, second]);
+    const cards = fs.readFileSync(path.join(project, 'cards'), 'utf8').trim().split('\n').map(JSON.parse);
+    assert.deepEqual(cards.map(card => card.title).sort(), ['A', 'B']);
+    const expected = Object.fromEntries(cards.map(({ title, item_id }) => [title, {
+      item_id, status: title === 'B' && secondHook === 'Stop' ? 'REVIEW' : 'DOING'
+    }]));
+    assert.deepEqual(JSON.parse(fs.readFileSync(path.join(project, '.kanban.json'))).tasks, expected);
+  });
+}
 
 function run(input, env = {}) {
   const result = spawnSync(process.execPath, [script], {

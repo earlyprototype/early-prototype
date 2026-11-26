@@ -27,7 +27,7 @@ Non-negotiable — violating them triggers the auto-mode classifier and can brea
 
 **All kanbanger MCP calls in this skill are delegated to the `kanban-worker` Haiku subagent via the `Task` tool.** Do NOT invoke `mcp__kanbanger__*` tools directly from this session — that burns Opus/Sonnet context on deterministic grunt work.
 
-When the steps below name a kanbanger operation (e.g. `add_task`, `list_tasks`, `sync_to_github`), execute it as:
+When the steps below name a kanbanger operation (e.g. `add_task`, `list_tasks`), execute it as:
 
 ```
 Task(
@@ -40,11 +40,8 @@ Task(
 Instruction shape (matches the kanban-worker's input contract at `~/.claude/agents/kanban-worker.md`):
 
 - Single step: `add_task(title="X", column="TODO")`
-- Multi-step: `add_task(title="X", column="TODO") then sync_to_github()` (semicolon `;` also works as separator)
 
 The kanban-worker returns one line per step in the form `OK: <summary>` or `ERR <error_code>: <explanation>`. Parse on the first 3 chars; branch on the structured error code per the existing recovery logic. The agent does NOT retry — that's the caller's job.
-
-**Batching is cheaper than fan-out.** One `Task` invocation that bundles `add_task(...) then sync_to_github()` costs less round-trip than two separate invocations. Use multi-step instructions wherever steps don't require caller judgement between them.
 
 Per `~/.claude/rules/performance.md`: Haiku is 3× cheaper than Sonnet for "worker agents in multi-agent systems" — kanban MCP calls fit exactly. The main session's context stays clean.
 
@@ -80,9 +77,9 @@ Queueing requires PM mode — without an open PM session there's no posture for 
    - On `ERROR_KANBAN_NOT_FOUND`: the project has no `_kanban.md`. Abort with: "No `_kanban.md` in this project. Create one (or use a project that has kanbanger configured) before `/queuetime`."
    - On any other error: surface the structured error to the user and stop.
 
-5. **Call kanbanger MCP `sync_to_github`** to push the new task to GitHub Projects. Best-effort — on any error, emit a one-line warning ("kanban-sync warning: <code>") but don't abort.
+   The post-tool hook syncs configured projects in the background.
 
-6. **Confirm to the user:**
+5. **Confirm to the user:**
 
    ```
    Queued: <task title> → <column>.
@@ -94,7 +91,6 @@ Queueing requires PM mode — without an open PM session there's no posture for 
 
 - It does **not** write `active-task.txt`. PM is still PM — Worker mode is only entered via `/chosetime` (pick a queued task) or `/worktime` (spawn fresh to DOING).
 - It does **not** move existing entries between columns. If a task is already on the board, this skill refuses (see step 3) — to promote a queued task, use `/chosetime`; to move via PM action, call `move_task` directly.
-- It does **not** push to GitHub if `sync_to_github` fails — local kanban update succeeds either way, but you may need a manual sync later.
 - It does **not** open a Worker context, fire the Stop hook, or produce any handoffs. Queueing is silent on PM's side.
 
 ## Related

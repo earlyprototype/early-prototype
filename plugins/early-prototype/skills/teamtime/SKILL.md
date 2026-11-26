@@ -104,19 +104,10 @@ These are non-negotiable — violating them triggers the auto-mode classifier an
         is the supported path.
      2. Re-run /teamtime.
 
-   Optional — for GitHub Projects sync to actually push, create
-   <this-project>/.claude/settings.local.json:
-
-       {
-         "env": {
-           "GITHUB_TOKEN":           "ghp_...",
-           "GITHUB_REPO":            "owner/repo",
-           "GITHUB_PROJECT_NUMBER":  "12"
-         }
-       }
-
-   Without these, local _kanban.md editing still works; sync_to_github warns
-   and continues per spec.
+   For automatic GitHub Projects sync, install kanban-sync on the hook PATH
+   outside the project. Set GITHUB_REPO in the project's gitignored .env.
+   Supply GITHUB_TOKEN there or in the hook environment. Set
+   GITHUB_PROJECT_NUMBER to select a project when the repository has several.
 
    References:
      Front-door:   ~/Desktop/AI/EverythingCC/_teamtime/Worker-PM-System.md
@@ -142,7 +133,7 @@ These are non-negotiable — violating them triggers the auto-mode classifier an
    **To queue**, dispatch to the Haiku `kanban-worker` subagent via the `Task` tool (`subagent_type: "kanban-worker"`) — the same path `/queuetime` uses; do **not** call `mcp__kanbanger__*` directly from this session. Batch the picks into one instruction, default column `TODO`:
 
    ```
-   add_task(title="<slice 1>", column="TODO"); add_task(title="<slice 2>", column="TODO"); sync_to_github()
+   add_task(title="<slice 1>", column="TODO"); add_task(title="<slice 2>", column="TODO")
    ```
 
    Parse the worker's `OK:` / `ERR <code>:` lines. If kanbanger wasn't detected in step 4, skip the queue — show the slices for reference and note that queuing needs kanbanger wired up first. On success, confirm `Queued M slice(s) → TODO — pick them up with /chosetime.` Leave the brief file in place (advisory record); adopting it doesn't delete it.

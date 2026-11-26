@@ -8,7 +8,7 @@
           {
             "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/kanban-github-sync.js\"",
-            "timeout": 120,
+            "timeout": 240,
             "async": true
           }
         ]
@@ -21,7 +21,7 @@
           {
             "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/worker-completion-signal.js\"",
-            "timeout": 30,
+            "timeout": 240,
             "async": true
           }
         ]
