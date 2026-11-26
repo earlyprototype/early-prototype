@@ -17,19 +17,12 @@ upkeep session. The plugin works independently of Baton.
 
 ## Install and use
 
-In Claude Code, register the marketplace and install the plugin.
+In Claude Code, register the marketplace, install DrDoc, and run it with a task.
 
 ```text
 /plugin marketplace add earlyprototype/early-prototype
 /plugin install drdoc@early-prototype
+/drdoc Check the README's current-state section before the next handover.
 ```
 
-Invoke the installed skill by its qualified name.
-
-```text
-/drdoc:drdoc Check the README's current-state section before the next handover.
-```
-
-For the short personal invocation `/drdoc`, copy the packaged `skills/drdoc/`
-directory to `~/.claude/skills/drdoc/`. Refresh that copy when you update the
-plugin.
+If another command uses `/drdoc`, run `/drdoc:drdoc` to select the installed plugin.

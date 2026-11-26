@@ -60,7 +60,7 @@ the short personal `$graphtime` invocation.
 
 Kanbanger requires Claude Code for marketplace installation. It supplies 11 MCP tools, invoked through the assistant, and adds no skills or slash commands. See its [guide](plugins/kanbanger/README.md) for first use and separate Cursor/Codex setup.
 
-After installing, skills are namespaced under the plugin:
+After installation, use these commands to run the skills.
 
 - `/early-prototype:prodtime` — open Product session
 - `/early-prototype:prodout` — close Product session
@@ -75,7 +75,7 @@ After installing, skills are namespaced under the plugin:
 - `/early-prototype:check-handoffs` — surface inbox
 - `/early-prototype:cleantime` — wipe all session state in this project
 - `/baton:baton` — create a reviewed session handover; see the [Baton installation notes](plugins/baton/README.md#install) for the short personal `/baton` command
-- `/drdoc:drdoc` starts a documentation upkeep session. For the short personal `/drdoc` command, see the [DrDoc guide](plugins/drdoc/README.md#install-and-use).
+- `/drdoc` starts a documentation upkeep session. If another command uses that name, run `/drdoc:drdoc` to select the installed plugin. See the [DrDoc guide](plugins/drdoc/README.md#install-and-use).
 - `$graphtime:graphtime` — enable, inspect or disable project context in Codex CLI
 
 ## What's inside
