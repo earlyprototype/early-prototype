@@ -30,7 +30,7 @@ shells out to it and presents the rendered text.
    promptly instead of waiting on its 3s stdin timeout:
 
    ```
-   node ~/.claude/hooks/pm-handoff-discovery.js < /dev/null
+   node "${CLAUDE_PLUGIN_ROOT}/hooks/pm-handoff-discovery.js" < /dev/null
    ```
 
    `/dev/null` is the right answer regardless of host OS, because the
@@ -53,23 +53,17 @@ shells out to it and presents the rendered text.
    - `Glob("<cwd>/.claude/inbox/pm/handoff-*.md")` (use the absolute cwd
      path; do NOT use `~` — the Windows Glob ENAMETOOLONG skill warns
      against globbing into `.claude` paths from `~`)
-   - Read each match. Skip files containing a line that matches
-     `<!-- PM:READ:YYYY-MM-DD -->` (the marker convention).
+   - Read each match. Skip files with a PM:READ line as described below.
    - Sort by file mtime descending; take top 6.
    - From each file, pull the four header lines: `Active task`, `Project`,
      `Status`, `Canonical handoff`. Present in the same shape as the hook.
 
 ## PM:READ marker convention
 
-The PM acknowledges a handoff by adding a single line to the pointer file:
-
-```
-<!-- PM:READ:YYYY-MM-DD -->
-```
-
-The discovery script and this skill both skip any file containing that
-marker. Adding it is a manual edit in v2 (a future `/mark-read` skill could
-automate it — that's v3 territory, not in scope here).
+`/readtime` appends `<!-- PM:READ:YYYY-MM-DD pm:<shortId> -->` or, when
+the session ID is unavailable, `<!-- PM:READ:YYYY-MM-DD -->`. Older
+pointers can contain `pm:unknown`. All three acknowledge the pointer.
+Match each line against `^[ \t]*<!--[ \t]*PM:READ:\d{4}-\d{2}-\d{2}(?:[ \t]+pm:(?:[0-9A-Fa-f]{8}|unknown))?[ \t]*-->[ \t]*\r?$`.
 
 ## What to surface to the user
 
@@ -81,7 +75,7 @@ from the pointer.
 
 ## Out of scope
 
-- Modifying inbox files (mark-read is a manual step in v2).
+- Modifying inbox files. Use `/readtime` to acknowledge a handoff.
 - Modifying handoffs in the Worker's project folder.
 - Patching kanbanger-partymix or anything outside `<cwd>/.claude/inbox/pm/` and
   the project handoffs the pointers reference.

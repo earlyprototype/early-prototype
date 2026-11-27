@@ -2,6 +2,8 @@
 /**
  * PM Handoff Discovery - SessionStart hook for PM Claude Code sessions.
  *
+ * Records the session's shortId for the lifecycle skills before checking the inbox.
+ *
  * On SessionStart:
  *   1. Scans <cwd>/.claude/inbox/pm/ for handoff-*.md pointers (written by the
  *      worker-completion-signal.js Stop hook). Per-project inbox: each project's
@@ -23,8 +25,8 @@
  *   the hookSpecificOutput stdout convention)
  *   ~/.claude/hooks/worker-completion-signal.js (stdin parsing, error/exit).
  *
- * Marker convention (matches v2 brief):
- *   <!-- PM:READ:YYYY-MM-DD -->     (case-sensitive, may have leading/trailing whitespace on line)
+ * A PM:READ line may contain a date alone, a date with a PM shortId,
+ * or a date with the older pm:unknown suffix.
  *
  * See: ~/Desktop/AI/EverythingCC/_teamtime/Worker-PM-System.md (front-door doc)
  * Historical briefs (archived): ~/Desktop/AI/EverythingCC/_teamtime/archive/
@@ -33,18 +35,16 @@
 'use strict';
 
 const fs = require('fs');
-const os = require('os');
 const path = require('path');
+const { randomUUID } = require('crypto');
 
 const MAX_STDIN = 1024 * 1024;
 const STDIN_TIMEOUT_MS = 3000;
 const MAX_HANDOFFS = 6;
 const TAG = '[PM-Handoff-Discovery]';
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const HANDOFF_FILENAME_RE = /^handoff-\d{4}-\d{2}-\d{2}-[0-9a-f]{8}-.*\.md$/i;
-// Marker accepts both legacy form `<!-- PM:READ:YYYY-MM-DD -->` and the
-// shortId-attributed form `<!-- PM:READ:YYYY-MM-DD pm:XXXXXXXX -->`.
-// shortId is 8 lowercase hex chars (last-8 of the PM session UUID).
-const PM_READ_LINE_RE = /^\s*<!--\s*PM:READ:\d{4}-\d{2}-\d{2}(?:\s+pm:[0-9a-f]{8})?\s*-->\s*$/m;
+const PM_READ_LINE_RE = /^[ \t]*<!--[ \t]*PM:READ:\d{4}-\d{2}-\d{2}(?:[ \t]+pm:(?:[0-9A-Fa-f]{8}|unknown))?[ \t]*-->[ \t]*\r?$/m;
 
 // ---------- stdin (mirrors worker-completion-signal.js 41-58) ----------
 let stdinData = '';
@@ -78,15 +78,31 @@ function runMain() {
 }
 
 // ---------- helpers ----------
-function getHomeDir() {
-  return process.env.USERPROFILE || process.env.HOME || os.homedir();
-}
+function writeSessionMarker(input, cwd) {
+  const transcript = typeof input.transcript_path === 'string'
+    ? path.win32.basename(input.transcript_path) : '';
+  const transcriptId = transcript.endsWith('.jsonl') ? transcript.slice(0, -6) : null;
+  const uuid = [input.session_id, transcriptId, process.env.CLAUDE_SESSION_ID]
+    .find(id => typeof id === 'string' && UUID_RE.test(id));
+  if (!uuid) return;
 
-function getInboxDir() {
-  // Per-project inbox: cwd of the SessionStart hook is the session's project root
-  // (inherited from the parent Claude Code process). Each project's Worker
-  // handoffs land in its own <project>/.claude/inbox/pm/ — no cross-project noise.
-  return path.join(process.cwd(), '.claude', 'inbox', 'pm');
+  // Claude Code expands ${CLAUDE_SESSION_ID} in each skill to this filename's UUID.
+  const dir = path.join(cwd, '.claude');
+  const marker = path.join(dir, `session-id-${uuid}.txt`);
+  const temp = `${marker}.${randomUUID()}.tmp`;
+  const shortId = uuid.slice(-8).toLowerCase();
+  try {
+    fs.mkdirSync(dir, { recursive: true });
+    // Resume may find an empty or stale marker. Publish the complete line at once.
+    try {
+      fs.writeFileSync(temp, shortId + '\n', { flag: 'wx' });
+      fs.renameSync(temp, marker);
+    } finally {
+      fs.rmSync(temp, { force: true });
+    }
+  } catch (err) {
+    console.error(`${TAG} session marker write failed: ${err.message}`);
+  }
 }
 
 function listHandoffs(inboxDir) {
@@ -142,13 +158,13 @@ function summariseHandoff(entry, content) {
   return { entry, date, shortId, taskSlug, taskTitle, project, status, canonical };
 }
 
-function renderContext(summaries) {
+function renderContext(summaries, inboxDir) {
   if (summaries.length === 0) {
     return [
       'PM inbox: no unread handoffs.',
       '',
       'Acknowledge handoffs by adding `<!-- PM:READ:YYYY-MM-DD -->` on its own line in the file.',
-      `Inbox folder: ${getInboxDir()}`
+      `Inbox folder: ${inboxDir}`
     ].join('\n');
   }
 
@@ -195,14 +211,15 @@ function emitEmptyContextAndExit() {
 
 // ---------- main ----------
 function main() {
-  // We accept (but don't currently use) the SessionStart stdin envelope; v1
-  // pattern is to be tolerant of malformed/missing stdin. We never block.
-  try { JSON.parse(stdinData || '{}'); } catch (_) { /* ignore */ }
+  let input;
+  try { input = JSON.parse(stdinData); } catch (_) { /* Manual inbox checks have no payload. */ }
+  const cwd = typeof input?.cwd === 'string' && input.cwd ? input.cwd : process.cwd();
+  if (input) writeSessionMarker(input, cwd);
 
-  const inboxDir = getInboxDir();
+  const inboxDir = path.join(cwd, '.claude', 'inbox', 'pm');
   const all = listHandoffs(inboxDir);
   if (all.length === 0) {
-    return emitPayload(renderContext([]));
+    return emitPayload(renderContext([], inboxDir));
   }
 
   // Filter unread, sort by mtime desc, slice top N.
@@ -222,5 +239,5 @@ function main() {
   const top = unread.slice(0, MAX_HANDOFFS);
 
   console.error(`${TAG} surfaced ${top.length} of ${unread.length} unread handoff(s) from ${inboxDir}`);
-  emitPayload(renderContext(top));
+  emitPayload(renderContext(top, inboxDir));
 }

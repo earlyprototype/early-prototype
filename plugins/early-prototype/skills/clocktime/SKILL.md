@@ -55,9 +55,7 @@ Per `~/.claude/rules/performance.md`: Haiku for the MCP grunt, Opus/Sonnet for t
 
 1. **Discover this session's shortId.** Used to identify which markers belong to THIS session — clocking out one session must not affect any concurrent siblings.
 
-   - Encode cwd: replace `\`, `/`, `:` with `-`.
-   - `Glob` for `~/.claude/projects/<encoded-cwd>/*.jsonl` — the most-recently-modified result's filename minus `.jsonl` is the full UUID; the last 8 hex characters are the **shortId**.
-   - **Fallback:** if discovery fails, use the literal string `unknown` as the shortId. The skill will then operate on `active-task-unknown.txt` / `worker-session-id-unknown.txt` — almost certainly absent, in which case step 2 aborts with the "no active task" message. Never block clock-out over identity discovery; the cleanup is still safe.
+   Match `${CLAUDE_SESSION_ID}` against `/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{4}([0-9a-f]{8})$/i`. If the UUID is missing or invalid, report that session identity is unavailable and use `unknown`. Otherwise, the lowercase capture is `<shortId>`. Use `Read` on `<cwd>/.claude/session-id-${CLAUDE_SESSION_ID}.txt` to confirm it. Keep the captured shortId if the file is missing, empty, or disagrees.
 
 2. **Read `<cwd>/.claude/active-task-<shortId>.txt`** (use the `Read` tool — do not Bash-probe it):
    - **Absent** → abort with: "No active Worker task in this cwd for this session's shortId. Run `/worktime` first if you want to open one. (Note: another session in this cwd may still have an open task — check `.claude/active-task-*.txt`; that one is theirs to close.)"

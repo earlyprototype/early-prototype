@@ -68,10 +68,7 @@ Per `~/.claude/rules/performance.md`: Haiku for worker-agent grunt work, Opus/So
 
 1. **Discover this session's shortId, then check `<cwd>/.claude/active-task-<shortId>.txt`.**
 
-   **Discovery** (per `Worker-PM-System.md §10` / timeteam `DESIGN-GUIDELINES.md §2` — the skill-side method):
-   - Encode cwd: replace `\`, `/`, `:` with `-` (e.g. `C:\Users\<user>\timeteam` → `C--Users-<user>-timeteam`).
-   - `Glob` for `~/.claude/projects/<encoded-cwd>/*.jsonl` — the most-recently-modified result is this session's transcript. The full filename minus `.jsonl` is this session's **full UUID** (saved for step 3a); the last 8 hex characters are the **shortId** (used here and in step 3).
-   - **Fallback:** if any step fails, use the literal string `unknown` as the shortId AND skip the full-UUID write in step 3a. Never block Worker open over identity discovery.
+   Match `${CLAUDE_SESSION_ID}` against `/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{4}([0-9a-f]{8})$/i`. If the UUID is missing or invalid, report that session identity is unavailable and use `unknown`. Otherwise, the lowercase capture is `<shortId>`. Use `Read` on `<cwd>/.claude/session-id-${CLAUDE_SESSION_ID}.txt` to confirm it. Keep the captured shortId if the file is missing, empty, or disagrees.
 
    **Marker check** (use the `Read` tool — do not Bash-probe it):
    - **Absent** → continue.
@@ -115,7 +112,7 @@ Per `~/.claude/rules/performance.md`: Haiku for worker-agent grunt work, Opus/So
    - For Overwrite: write the single line.
    - For Append: prepend the new line to the existing content.
 
-3a. **Write `<cwd>/.claude/worker-session-id-<shortId>.txt`** containing the current Claude Code session's full UUID on one line. This is the session-id gate that the Stop hook uses to attribute handoffs — without it, other concurrent sessions in the same cwd would also produce Worker handoffs, doubling the inbox. The full UUID was already discovered in step 1 (the `.jsonl` basename minus the extension). `Write` it to `worker-session-id-<shortId>.txt` (single line, no trailing newline necessary but tolerable). If step 1's discovery returned `unknown`, skip writing this marker — the Stop hook will fall back to the legacy gate.
+3a. **Write `<cwd>/.claude/worker-session-id-<shortId>.txt`** with the full UUID `${CLAUDE_SESSION_ID}` on one line. Skip this write if the shortId is `unknown`.
 
 4. Call the kanbanger MCP **`add_task`** tool with `title=<the new task>`, `column="DOING"`. The MCP handles `_kanban.md` formatting, validation, and the canonical column rebuild. Note: `add_task`'s default column is `TODO` — passing `"DOING"` explicitly is required for Worker clock-in.
    - On `ERROR_KANBAN_NOT_FOUND`: the project has no `_kanban.md`. Skip the kanban steps silently; tell the user "active-task marker set; no kanban in this project so no board update".

@@ -18,31 +18,21 @@ Append one timestamped note from Worker to the project's `worker-notes.md`. The 
 Non-negotiable — violating them triggers the auto-mode classifier and can break the skill mid-flow:
 
 - **File existence / content checks → use the `Read` tool.** Do **NOT** use Bash `test -f`, `[[ -f ... ]]`, `Test-Path`, `Get-Content`, `cat`, `ls`, or any PowerShell-style probe.
-- **Globbing for the transcript path (Worker identity discovery) → use the `Glob` tool.**
 - **Appending the note → use the `Edit` tool** to add a new entry to `<cwd>/.claude/worker-notes.md` (or `Write` if the file doesn't yet exist). Not Bash redirection.
 
 ## Worker identity (shortId)
 
-Each note must be stamped with the writing session's **shortId** — the last 8 hex characters of the current Claude Code session UUID. This makes notes attributable across split-session work (two Worker sessions in the same cwd → distinguishable note streams).
-
-**Discovery (do this before composing the entry):**
-
-1. Compute the cwd-encoded subdir name: `<cwd>` with all `\` and `/` and `:` replaced by `-`. E.g. `C:\Users\<user>\Desktop\AI\junk2\worker-signal-test` → `C--Users-<user>-Desktop-AI-junk2-worker-signal-test`.
-2. `Glob` for `~/.claude/projects/<encoded-cwd>/*.jsonl`. The most recently-modified one (top of the Glob result) is the current session's transcript.
-3. Extract the UUID from the filename (it's the full filename minus `.jsonl`). Take the last 8 hex characters → that's the shortId.
-4. If the Glob returns nothing (transcript path not found), use the literal placeholder `unknown` as the shortId — never fail the note write over identity discovery.
+Match `${CLAUDE_SESSION_ID}` against `/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{4}([0-9a-f]{8})$/i`. If the UUID is missing or invalid, report that session identity is unavailable and use `unknown`. Otherwise, the lowercase capture is `<shortId>`. Use `Read` on `<cwd>/.claude/session-id-${CLAUDE_SESSION_ID}.txt` to confirm it. Keep the captured shortId if the file is missing, empty, or disagrees.
 
 ## Precondition
 
-`<cwd>/.claude/active-task.txt` must exist (i.e. a Worker task is open). If absent, abort with:
+Use `Read` on `<cwd>/.claude/active-task-<shortId>.txt` to check that this Worker has an open task. If the file is absent, stop with the following message.
 
 ```
 No active Worker task in this cwd. /notetime is a Worker-side mid-task ritual.
 - Open a task first with /worktime, then re-invoke /notetime.
 - If you wanted a PM-side observation, capture it for /sleeptime's decisions / open-items prompts at PM session close.
 ```
-
-Without an open Worker task, `/notetime`'s notes have no canonical handoff to land in — the Stop hook is silent (no `active-task.txt` gate), so notes written here would sit dormant on disk. Hard-gate, don't silently write.
 
 ## How
 
@@ -52,16 +42,14 @@ Without an open Worker task, `/notetime`'s notes have no canonical handoff to la
 
 2. **Compute timestamp** in `YYYY-MM-DD HH:MM` format (local time).
 
-3. **Discover the Worker shortId** per the "Worker identity (shortId)" section above. Glob the transcript path, take the most recent `.jsonl`, extract last-8-hex from its filename. Fall back to `unknown` if discovery fails.
-
-4. **Append** to `<cwd>/.claude/worker-notes.md`:
+3. **Append** to `<cwd>/.claude/worker-notes.md` using the same shortId as the task check.
    - Create `<cwd>/.claude/` if absent
    - Create the file if absent (no header needed; entries are self-describing)
    - Always append (never overwrite). The entry shape is:
 
      ```
 
-     ## <timestamp> [worker:<SHORTID>]
+     ## <timestamp> [worker:<shortId>]
      <note text, trimmed>
      ```
 
