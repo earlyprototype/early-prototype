@@ -29,7 +29,7 @@ Non-negotiable — violating them triggers the auto-mode classifier and can brea
 
 **All kanbanger MCP calls in this skill are delegated to the `kanban-worker` Haiku subagent via the `Task` tool.** Do NOT invoke `mcp__kanbanger__*` tools directly from this session.
 
-When the steps below name a kanbanger operation (e.g. `list_tasks`, `move_task`, `sync_to_github`), execute it as:
+When the steps below name a kanbanger operation (e.g. `list_tasks`, `move_task`), execute it as:
 
 ```
 Task(
@@ -42,8 +42,6 @@ Task(
 The kanban-worker returns one line per step (`OK: <summary>` or `ERR <code>: <explanation>`). Parse in main context, apply judgement, decide next move.
 
 **For the orphan-gate check + queue enumeration:** one `Task` call with `list_tasks()` (no column filter) returns all columns at once — parse the result in main context to handle both the orphan check (is the existing `active-task-<shortId>.txt` title in DOING/REVIEW?) and the queue listing (what's in TODO/BACKLOG to offer the user?). One Haiku call covers both.
-
-**For step 5 + step 6 (move from queue + sync):** batch as one `Task` invocation: `move_task(title="<X>", from_column="<TODO|BACKLOG>", to_column="DOING") then sync_to_github()`.
 
 Per `~/.claude/rules/performance.md`: Haiku is the correct cost tier for deterministic kanban grunt work.
 
@@ -93,9 +91,9 @@ Per `~/.claude/rules/performance.md`: Haiku is the correct cost tier for determi
    - On `ERROR_INVALID_STATE`: the task isn't actually in `from_column` (concurrent edit). Re-fetch and retry.
    - On other errors: surface the structured error and stop. Don't try markdown surgery.
 
-6. **Call kanbanger MCP `sync_to_github`** to push the column move to GitHub Projects. Best-effort — on any error, emit a one-line warning ("kanban-sync warning: <code>") but don't abort.
+   The post-tool hook syncs configured projects in the background.
 
-7. **Confirm to the user:**
+6. **Confirm to the user:**
 
    ```
    Worker task open for: <task title>.

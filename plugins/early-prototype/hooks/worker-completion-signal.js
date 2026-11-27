@@ -33,7 +33,7 @@ const kanbanMover = require('./lib/kanban-mover');
 
 const MAX_STDIN = 1024 * 1024;
 const STDIN_TIMEOUT_MS = 5000;
-const KANBAN_SYNC_TIMEOUT_MS = 20000;
+const { syncBoard } = require('./lib/github-sync');
 const TAG = '[Worker-Signal]';
 
 // ---------- stdin (mirrors session-end.js 113-134) ----------
@@ -291,24 +291,11 @@ async function main() {
     console.error(`${TAG} inbox pointer write failed: ${err.message}`);
   }
 
-  // Tier 3: push to GitHub via kanban-sync, only when we actually moved something
-  // locally. Captured stdio prevents auth-header leakage if kanban-sync ever
-  // logs request internals.
   if (kanbanResult.moved) {
     try {
-      const r = spawnSync('kanban-sync', [kanbanPath], {
-        cwd,
-        stdio: ['ignore', 'pipe', 'pipe'],
-        timeout: KANBAN_SYNC_TIMEOUT_MS,
-        shell: process.platform === 'win32'
-      });
-      if (r.status === 0) {
-        console.error(`${TAG} kanban-sync ok`);
-      } else {
-        console.error(`${TAG} kanban-sync exit=${r.status}; handoff at ${projectHandoffPath}`);
-      }
-    } catch (err) {
-      console.error(`${TAG} kanban-sync spawn failed: ${err.message}; handoff at ${projectHandoffPath}`);
+      await syncBoard(cwd);
+    } catch {
+      console.error(`${TAG} Could not sync the project board.`);
     }
   }
 

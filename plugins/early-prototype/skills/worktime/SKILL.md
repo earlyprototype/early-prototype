@@ -41,7 +41,7 @@ Non-negotiable — violating them triggers the auto-mode classifier and the clas
 
 **All kanbanger MCP calls in this skill are delegated to the `kanban-worker` Haiku subagent via the `Task` tool.** Do NOT invoke `mcp__kanbanger__*` tools directly from this session — that burns Opus/Sonnet context on deterministic grunt work.
 
-When the steps below name a kanbanger operation (e.g. `list_tasks`, `add_task`, `sync_to_github`), execute it as:
+When the steps below name a kanbanger operation (e.g. `list_tasks`, `add_task`), execute it as:
 
 ```
 Task(
@@ -54,13 +54,10 @@ Task(
 Instruction shape:
 
 - Single step: `list_tasks()` or `add_task(title="X", column="DOING")`
-- Multi-step: `add_task(title="X", column="DOING") then sync_to_github()`
 
 The kanban-worker returns one line per step in the form `OK: <summary>` or `ERR <error_code>: <explanation>`. Parse and branch per the existing recovery logic. The agent does NOT retry — caller's job.
 
 **For the orphan-gate and duplicate-detection checks (steps 1 and 2):** delegate `list_tasks()` (no column filter) to the kanban-worker once, parse the returned listing in main context, then apply the judgement (orphan? duplicate? proceed?). Don't fan out to multiple `list_tasks` invocations per column — one call returns everything.
-
-**For step 4 + step 5 (add to DOING + sync):** batch as one `Task` invocation: `add_task(title="<X>", column="DOING") then sync_to_github()`.
 
 Per `~/.claude/rules/performance.md`: Haiku for worker-agent grunt work, Opus/Sonnet reserved for the conversation and judgement. Main session context stays lean.
 
@@ -121,9 +118,9 @@ Per `~/.claude/rules/performance.md`: Haiku for worker-agent grunt work, Opus/So
    - On `ERROR_KANBAN_NOT_FOUND`: the project has no `_kanban.md`. Skip the kanban steps silently; tell the user "active-task marker set; no kanban in this project so no board update".
    - On any other error code: surface the structured error to the user and stop. Don't try to recover via markdown surgery — the MCP is the source of truth.
 
-5. If step 4 succeeded, call the kanbanger MCP **`sync_to_github`** tool to push the new task to GitHub Projects. Best-effort — on any error, emit a one-line warning ("kanban-sync warning: <code>") but don't abort.
+   The post-tool hook syncs configured projects in the background.
 
-6. Confirm to the user with a single block:
+5. Confirm to the user with a single block:
 
    ```
    Worker task open for: <task title>.

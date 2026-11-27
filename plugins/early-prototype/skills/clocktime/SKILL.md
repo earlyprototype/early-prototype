@@ -14,7 +14,7 @@ description: |
 
 # Clocktime
 
-Worker task end. Approves the task as done through kanbanger's review gate, syncs to GitHub, archives the Worker notes, and clears THIS session's shortId-scoped active-task + worker-session-id markers. The containing PM session continues — use `/sleeptime` to end it.
+Worker task end. Approves the task as done through kanbanger's review gate, archives the Worker notes, and clears THIS session's shortId-scoped active-task + worker-session-id markers. The containing PM session continues — use `/sleeptime` to end it.
 
 ## Tool conventions for this skill
 
@@ -29,7 +29,7 @@ Non-negotiable — violating them triggers the auto-mode classifier and can brea
 
 **All kanbanger MCP calls in this skill are delegated to the `kanban-worker` Haiku subagent via the `Task` tool.** Do NOT invoke `mcp__kanbanger__*` tools directly from this session.
 
-When the steps below name a kanbanger operation (e.g. `approve_done`, `propose_done`, `sync_to_github`), execute it as:
+When the steps below name a kanbanger operation (e.g. `approve_done`, `propose_done`), execute it as:
 
 ```
 Task(
@@ -43,8 +43,8 @@ The kanban-worker returns one line per step (`OK: <summary>` or `ERR <code>: <ex
 
 **Review-gate recovery pattern** — `/clocktime`'s most-frequent case. The Stop hook usually has already moved the task DOING → REVIEW, so `approve_done` alone usually succeeds. When it doesn't (Stop hadn't fired, or task was reverted), the recovery is `propose_done` + `approve_done`. Implement as two Task invocations driven by main-context judgement:
 
-1. First call: `Task(prompt: "approve_done(title=\"<X>\") then sync_to_github()")`
-2. If the first OK line is `ERR ERROR_INVALID_STATE`: second call: `Task(prompt: "propose_done(title=\"<X>\") then approve_done(title=\"<X>\") then sync_to_github()")`
+1. First call: `Task(prompt: "approve_done(title=\"<X>\")")`
+2. If the first OK line is `ERR ERROR_INVALID_STATE`: second call: `Task(prompt: "propose_done(title=\"<X>\") then approve_done(title=\"<X>\")")`
 3. If either step in the second call ERRs: surface the structured error to user, abort cleanup (don't archive notes or delete `active-task-<shortId>.txt` if the kanban-side state isn't reconciled).
 
 Don't try to encode this branching as a single Haiku instruction — the recovery is judgement-dependent (caller decides whether to retry, abort, or escalate). Haiku executes one path at a time and reports; main context decides what comes next.
@@ -72,20 +72,20 @@ Per `~/.claude/rules/performance.md`: Haiku for the MCP grunt, Opus/Sonnet for t
      - abort the skill
    - **`ERROR_KANBAN_NOT_FOUND`** → the project has no `_kanban.md`. Skip kanban silently; continue with cleanup.
 
-4. If kanban moves succeeded, call kanbanger MCP **`sync_to_github`** to push the DONE state to GitHub Projects. Best-effort — on any error, emit a one-line warning ("kanban-sync warning: <code>") and continue. Don't abort cleanup.
+   The post-tool hook syncs configured projects in the background.
 
-5. Archive Worker notes if present. Look for `<cwd>/.claude/worker-notes.md`. If it exists:
+4. Archive Worker notes if present. Look for `<cwd>/.claude/worker-notes.md`. If it exists:
    - Compute `<TASKSLUG>` from the task title: lowercase, non-alphanumeric → `-`, strip leading/trailing `-`, cap at 40 chars (mirror the slugify used by the Stop hook so archive filenames match the canonical handoff family).
    - Rename to `<cwd>/.claude/worker-notes-<YYYY-MM-DD>-<TASKSLUG>.archive`.
    - If the archive path already exists (multiple `/clocktime` calls same task same day), append a numeric suffix `-1`, `-2`, etc., until a free name is found.
 
    Note: `worker-notes.md` is currently NOT shortId-scoped — it's a single file per cwd. Two concurrent sessions clocking out in the same cwd race on this file. Acceptable as a v1 trade-off — `/notetime` writes are append-only and ISO-timestamped per entry, so notes from both sessions land coherently in whichever archive lands first; the second `/clocktime` finds an empty `worker-notes.md` and skips the archive step. If split-session note attribution becomes important, scope this marker too in a future iteration.
 
-6. Delete `<cwd>/.claude/active-task-<shortId>.txt`. The Stop hook (for THIS session) will go silent in this cwd until the next `/worktime`. The PM session marker (`pm-session-<shortId>.txt`) is left intact. Other sessions' active-task markers are not touched.
+5. Delete `<cwd>/.claude/active-task-<shortId>.txt`. The Stop hook (for THIS session) will go silent in this cwd until the next `/worktime`. The PM session marker (`pm-session-<shortId>.txt`) is left intact. Other sessions' active-task markers are not touched.
 
-6a. **Delete `<cwd>/.claude/worker-session-id-<shortId>.txt`** if present. This is the session-id gate paired with the active-task marker — clear it together so the Stop hook fully releases for this session. Skip silently if the file doesn't exist (legacy projects without the marker, or step 1's shortId fallback hit `unknown`).
+5a. **Delete `<cwd>/.claude/worker-session-id-<shortId>.txt`** if present. This is the session-id gate paired with the active-task marker — clear it together so the Stop hook fully releases for this session. Skip silently if the file doesn't exist (legacy projects without the marker, or step 1's shortId fallback hit `unknown`).
 
-7. Confirm to the user in a single block:
+6. Confirm to the user in a single block:
 
    ```
    Worker task '<title>' marked DONE.
