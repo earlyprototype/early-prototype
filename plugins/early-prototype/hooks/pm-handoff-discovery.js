@@ -25,8 +25,8 @@
  *   the hookSpecificOutput stdout convention)
  *   ~/.claude/hooks/worker-completion-signal.js (stdin parsing, error/exit).
  *
- * Marker convention (matches v2 brief):
- *   <!-- PM:READ:YYYY-MM-DD -->     (case-sensitive, may have leading/trailing whitespace on line)
+ * A PM:READ line may contain a date alone, a date with a PM shortId,
+ * or a date with the older pm:unknown suffix.
  *
  * See: ~/Desktop/AI/EverythingCC/_teamtime/Worker-PM-System.md (front-door doc)
  * Historical briefs (archived): ~/Desktop/AI/EverythingCC/_teamtime/archive/
@@ -36,6 +36,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { randomUUID } = require('crypto');
 
 const MAX_STDIN = 1024 * 1024;
 const STDIN_TIMEOUT_MS = 3000;
@@ -43,10 +44,7 @@ const MAX_HANDOFFS = 6;
 const TAG = '[PM-Handoff-Discovery]';
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const HANDOFF_FILENAME_RE = /^handoff-\d{4}-\d{2}-\d{2}-[0-9a-f]{8}-.*\.md$/i;
-// Marker accepts both legacy form `<!-- PM:READ:YYYY-MM-DD -->` and the
-// shortId-attributed form `<!-- PM:READ:YYYY-MM-DD pm:XXXXXXXX -->`.
-// shortId is 8 lowercase hex chars (last-8 of the PM session UUID).
-const PM_READ_LINE_RE = /^\s*<!--\s*PM:READ:\d{4}-\d{2}-\d{2}(?:\s+pm:[0-9a-f]{8})?\s*-->\s*$/m;
+const PM_READ_LINE_RE = /^[ \t]*<!--[ \t]*PM:READ:\d{4}-\d{2}-\d{2}(?:[ \t]+pm:(?:[0-9A-Fa-f]{8}|unknown))?[ \t]*-->[ \t]*\r?$/m;
 
 // ---------- stdin (mirrors worker-completion-signal.js 41-58) ----------
 let stdinData = '';
@@ -91,13 +89,19 @@ function writeSessionMarker(input, cwd) {
   // Claude Code expands ${CLAUDE_SESSION_ID} in each skill to this filename's UUID.
   const dir = path.join(cwd, '.claude');
   const marker = path.join(dir, `session-id-${uuid}.txt`);
+  const temp = `${marker}.${randomUUID()}.tmp`;
   const shortId = uuid.slice(-8).toLowerCase();
   try {
     fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(marker, shortId + '\n', { flag: 'wx' });
+    // Resume may find an empty or stale marker. Publish the complete line at once.
+    try {
+      fs.writeFileSync(temp, shortId + '\n', { flag: 'wx' });
+      fs.renameSync(temp, marker);
+    } finally {
+      fs.rmSync(temp, { force: true });
+    }
   } catch (err) {
-    // A resumed session already has its marker.
-    if (err.code !== 'EEXIST') console.error(`${TAG} session marker write failed: ${err.message}`);
+    console.error(`${TAG} session marker write failed: ${err.message}`);
   }
 }
 

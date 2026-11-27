@@ -2,8 +2,7 @@
 name: readtime
 description: |
   PM ritual to acknowledge an unread Worker handoff. Lists unread handoff
-  pointers in `<cwd>/.claude/inbox/pm/` (i.e., files without a
-  `<!-- PM:READ:YYYY-MM-DD -->` marker), lets the user pick one, opens
+  pointers in `<cwd>/.claude/inbox/pm/`, lets the user pick one, opens
   the canonical §6 handoff for review, then appends the PM:READ marker
   to the pointer so it's filtered out of future SessionStart and
   `/check-handoffs` surfacing. Requires an open PM session
@@ -25,17 +24,7 @@ Non-negotiable — violating them triggers the auto-mode classifier and can brea
 
 ## PM identity (shortId)
 
-When marking a pointer PM:READ, stamp the marker with the **current PM session's shortId** — the last 8 hex characters of the Claude Code session UUID. This attributes the acknowledgement to a specific PM session (matters in split-session and audit contexts).
-
-Use `Read` on `<cwd>/.claude/session-id-${CLAUDE_SESSION_ID}.txt`. SessionStart writes the shortId on one line. Use it if it matches the last eight hex digits of the UUID in the filename, in lowercase. If the marker is missing or invalid, use `unknown`.
-
-The marker format is:
-
-```
-<!-- PM:READ:YYYY-MM-DD pm:XXXXXXXX -->
-```
-
-The legacy form (no `pm:` suffix) remains valid for backward compatibility — the SessionStart hook's regex accepts both shapes.
+Match `${CLAUDE_SESSION_ID}` against `/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{4}([0-9a-f]{8})$/i`. If the UUID is missing or invalid, report that session identity is unavailable and use `unknown`. Otherwise, the lowercase capture is `<shortId>`. Use `Read` on `<cwd>/.claude/session-id-${CLAUDE_SESSION_ID}.txt` to confirm it. Keep the captured shortId if the file is missing, empty, or disagrees.
 
 ## Precondition
 
@@ -51,8 +40,7 @@ Acknowledging handoffs is a PM action — needs an open PM posture, not Worker m
 
 1. **List unread pointers in the per-project inbox.** Use `Glob` to enumerate `<cwd>/.claude/inbox/pm/handoff-*.md`. For each file:
    - Use `Read` to load its content.
-   - Check whether it contains a line matching `<!-- PM:READ:YYYY-MM-DD -->` (regex tolerant of whitespace: `<!--\s*PM:READ:\d{4}-\d{2}-\d{2}\s*-->`).
-   - **Skip files that already have the marker** — they're already acknowledged.
+   - Skip any pointer with an acknowledgement on its own line. Match each line against `^[ \t]*<!--[ \t]*PM:READ:\d{4}-\d{2}-\d{2}(?:[ \t]+pm:(?:[0-9A-Fa-f]{8}|unknown))?[ \t]*-->[ \t]*\r?$`. This accepts a date alone, a PM shortId, and the older `pm:unknown` suffix.
    - Build a list of unread pointers, sorted by file mtime descending (most recent first).
 
    If the list is empty, confirm:
@@ -88,15 +76,10 @@ Acknowledging handoffs is a PM action — needs an open PM posture, not Worker m
    - **Skip (don't mark)** — leave pointer unread, exit (user can re-invoke `/readtime` later)
    - **Show another** — return to step 2's list (user wants to review more without acknowledging this one yet)
 
-6. **If "Mark PM:READ":** use `Edit` to append a new marker line at the end of the pointer file:
+6. **If "Mark PM:READ"**, use `Edit` to append one line to the pointer. Use today's local date in place of `YYYY-MM-DD`.
 
-   ```
-   <!-- PM:READ:YYYY-MM-DD pm:XXXXXXXX -->
-   ```
-
-   - Use today's date (cwd-local).
-   - `XXXXXXXX` is the PM session's shortId discovered per the "PM identity (shortId)" section above. If discovery failed, use `unknown` literally.
-   - The marker line should be the last line of the file. Use `Edit` to add it (read the file, find a unique tail-anchor like the closing `---\n_Pointer only...` line, replace that with the same line plus the marker on a new line).
+   - With a valid shortId, append `<!-- PM:READ:YYYY-MM-DD pm:<shortId> -->`.
+   - If the shortId is `unknown`, append `<!-- PM:READ:YYYY-MM-DD -->`.
 
    On success, confirm:
 
@@ -132,5 +115,5 @@ The acknowledgement is *separate* from the kanban approval — they're different
 ## Related
 
 - Sister skills: `/teamtime` (open PM session), `/check-handoffs` (list unread without acknowledging), `/sleeptime` (close PM session)
-- SessionStart auto-discovery hook: `~/.claude/hooks/pm-handoff-discovery.js` (uses the same PM:READ marker convention)
+- SessionStart uses the plugin's `hooks/pm-handoff-discovery.js` to list unread pointers.
 - Front-door doc: `~/Desktop/AI/EverythingCC/_teamtime/Worker-PM-System.md`

@@ -30,25 +30,48 @@ function runHook(cwd, input, envId = '') {
   });
 }
 
-test('two sessions in the same daily folder resolve distinct /teamtime marker paths', async t => {
+function skill(name) {
+  return fs.readFileSync(path.join(skillsDir, name, 'SKILL.md'), 'utf8');
+}
+
+// Exercise the UUID capture in the skill after Claude Code's string substitution.
+function captureSuffix(instructions, uuid) {
+  const expanded = instructions.replaceAll('${CLAUDE_SESSION_ID}', uuid);
+  const rule = expanded.match(/Match `([^`]+)` against `\/([^`]+)\/i`/);
+  assert.ok(rule, 'missing UUID capture in skill');
+  return new RegExp(rule[2], 'i').exec(rule[1])?.[1]?.toLowerCase();
+}
+
+test('two sessions starting in the same daily folder get distinct identity markers', async t => {
   const cwd = project(t);
   const run = session_id => runHook(path.dirname(cwd), { cwd, session_id }, second);
   await Promise.all([run(first), run(second)]);
-  await run(first); // SessionStart also runs on resume.
-
-  const teamtime = fs.readFileSync(path.join(skillsDir, 'teamtime/SKILL.md'), 'utf8');
-  const readPath = teamtime.match(/Use `Read` on `<cwd>\/(\.claude\/session-id-[^`]+)`/)[1];
-  const writePath = teamtime.match(/Write the user-provided description to `<cwd>\/([^`]+)`/)[1];
-  // Apply Claude Code's skill substitution and the documented PM marker write.
   for (const [uuid, expected] of [[first, 'dc7ba899'], [second, 'abcd1234']]) {
-    const marker = readPath.replace('${CLAUDE_SESSION_ID}', uuid);
-    const shortId = fs.readFileSync(path.join(cwd, marker), 'utf8').trim();
-    assert.equal(shortId, expected);
-    const pmMarker = writePath.replace('<shortId>', shortId);
-    fs.writeFileSync(path.join(cwd, pmMarker), uuid, { flag: 'wx' });
+    assert.equal(fs.readFileSync(path.join(cwd, '.claude', `session-id-${uuid}.txt`), 'utf8').trim(), expected);
   }
-  for (const [shortId, uuid] of [['dc7ba899', first], ['abcd1234', second]]) {
-    assert.equal(fs.readFileSync(path.join(cwd, '.claude', `pm-session-${shortId}.txt`), 'utf8'), uuid);
+});
+
+test('two sessions entering the same child directory resolve distinct /teamtime write paths', async t => {
+  const child = project(t);
+  const parent = path.dirname(child);
+  await Promise.all([first, second].map(session_id => runHook(parent, { cwd: parent, session_id })));
+  assert.equal(fs.existsSync(path.join(child, '.claude')), false);
+  const instructions = skill('teamtime');
+  const writePath = instructions.match(/Write the user-provided description to `<cwd>\/([^`]+)`/)[1];
+  for (const [uuid, filename] of [[first, 'pm-session-dc7ba899.txt'], [second, 'pm-session-abcd1234.txt']]) {
+    const shortId = captureSuffix(instructions, uuid);
+    assert.equal(path.join(child, writePath.replace('<shortId>', shortId)), path.join(child, '.claude', filename));
+  }
+});
+
+test('resume repairs an empty identity marker and an incorrect eight-hex marker', async t => {
+  const cwd = project(t);
+  await runHook(cwd, { cwd, session_id: first, source: 'startup' });
+  const marker = path.join(cwd, '.claude', `session-id-${first}.txt`);
+  for (const invalid of ['', 'abcd1234\n']) {
+    fs.writeFileSync(marker, invalid);
+    await runHook(cwd, { cwd, session_id: first, source: 'resume' });
+    assert.equal(fs.readFileSync(marker, 'utf8'), 'dc7ba899\n');
   }
 });
 
@@ -80,13 +103,59 @@ test('a marker write failure still surfaces unread handoffs', async t => {
   assert.match(output.additionalContext, /Active task: Review request/);
 });
 
-test('the registered SessionStart hook and eight lifecycle skills agree on the identity marker', () => {
+test('the registered hook and public session skills use the live session identity', () => {
   const config = JSON.parse(fs.readFileSync(path.join(hooksDir, 'hooks.json'), 'utf8'));
   const commands = config.hooks.SessionStart.flatMap(entry => entry.hooks.map(hook => hook.command));
   assert.ok(commands.includes('node "${CLAUDE_PLUGIN_ROOT}/hooks/pm-handoff-discovery.js"'));
-  for (const name of ['teamtime', 'worktime', 'sleeptime', 'readtime', 'prodtime', 'prodout', 'clocktime', 'chosetime']) {
-    const skill = fs.readFileSync(path.join(skillsDir, name, 'SKILL.md'), 'utf8');
-    assert.ok(skill.includes('Use `Read` on `<cwd>/.claude/session-id-${CLAUDE_SESSION_ID}.txt`'), name);
-    assert.doesNotMatch(skill, /encoded-cwd|\.claude\/projects\/|session-id-\*/, name);
+  for (const name of fs.readdirSync(skillsDir)) {
+    const instructions = skill(name);
+    assert.doesNotMatch(instructions, /encoded-cwd|\.claude\/projects\/|\.claude\/session-id-\*/, name);
+    if (!/<cwd>\/\.claude\/[^\s`]*<shortId>|\[worker:<shortId>\]/i.test(instructions)) continue;
+    assert.ok(instructions.includes('<cwd>/.claude/session-id-${CLAUDE_SESSION_ID}.txt'), name);
+    assert.match(instructions, /Keep the captured shortId if the file is missing, empty, or disagrees/, name);
+    assert.equal(captureSuffix(instructions, first), 'dc7ba899', name);
+    assert.equal(captureSuffix(instructions, 'invalid-abcd1234'), undefined, name);
   }
+});
+
+test('/notetime uses the /worktime task path and the same shortId for its stamp', () => {
+  const notes = skill('notetime');
+  const taskPath = skill('worktime').match(/Write the description to `([^`]+)`/)[1];
+  assert.ok(notes.split('## Precondition')[1].split('## How')[0].includes(`\`${taskPath}\``));
+  assert.doesNotMatch(notes, /active-task\.txt/);
+  assert.match(notes, /## <timestamp> \[worker:<shortId>\]/);
+  assert.equal(captureSuffix(notes, second), 'abcd1234');
+});
+
+test('a second inbox listing excludes all acknowledged pointers and keeps malformed markers unread', async t => {
+  const cwd = project(t);
+  const inbox = path.join(cwd, '.claude/inbox/pm');
+  fs.mkdirSync(inbox, { recursive: true });
+  const readtime = skill('readtime');
+  const attributed = readtime.match(/With a valid shortId, append `([^`]+)`/)[1];
+  const dateOnly = readtime.match(/If the shortId is `unknown`, append `([^`]+)`/)[1];
+  assert.equal(dateOnly, '<!-- PM:READ:YYYY-MM-DD -->');
+  const markers = [
+    attributed.replace('YYYY-MM-DD', '2026-06-10').replace('<shortId>', 'dc7ba899'),
+    dateOnly.replace('YYYY-MM-DD', '2026-06-10'),
+    '\t<!-- PM:READ:2026-06-10 pm:unknown --> ',
+    '<!-- PM:READ:2026-06-10 pm:DC7BA899 -->',
+    '<!-- PM:READ:2026-06-10 pm:bad -->',
+    'Example: <!-- PM:READ:2026-06-10 -->'
+  ];
+  const pointers = markers.map((_, i) => path.join(inbox, `handoff-2026-06-10-abcd1234-task-${i}.md`));
+  for (const [i, file] of pointers.entries()) fs.writeFileSync(file, `- **Active task:** Task ${i}\r\n`);
+
+  async function checkListings(expected) {
+    const context = JSON.parse(await runHook(cwd, {})).hookSpecificOutput.additionalContext;
+    assert.deepEqual(pointers.filter(file => context.includes(file)), expected, 'SessionStart');
+    for (const name of ['readtime', 'check-handoffs']) {
+      const pattern = skill(name).match(/`([^`\n]*PM:READ:\\d\{4\}[^`\n]+)`/)[1];
+      const filter = new RegExp(pattern, 'm');
+      assert.deepEqual(pointers.filter(file => !filter.test(fs.readFileSync(file, 'utf8'))), expected, name);
+    }
+  }
+  await checkListings(pointers);
+  for (const [i, file] of pointers.entries()) fs.appendFileSync(file, markers[i] + '\r\n');
+  await checkListings(pointers.slice(4));
 });

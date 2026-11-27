@@ -31,7 +31,7 @@ Non-negotiable — violating them triggers the auto-mode classifier and can brea
 
 1. **Discover this session's shortId.** Used to identify which marker belongs to THIS product session — closing one session must not affect any concurrent siblings.
 
-   Use `Read` on `<cwd>/.claude/session-id-${CLAUDE_SESSION_ID}.txt`. SessionStart writes the shortId on one line. Use it if it matches the last eight hex digits of the UUID in the filename, in lowercase. If the marker is missing or invalid, use `unknown`.
+   Match `${CLAUDE_SESSION_ID}` against `/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{4}([0-9a-f]{8})$/i`. If the UUID is missing or invalid, report that session identity is unavailable and use `unknown`. Otherwise, the lowercase capture is `<shortId>`. Use `Read` on `<cwd>/.claude/session-id-${CLAUDE_SESSION_ID}.txt` to confirm it. Keep the captured shortId if the file is missing, empty, or disagrees.
 
 2. **Read `<cwd>/.claude/prod-session-<shortId>.txt`** (use the `Read` tool — do not Bash-probe it):
    - **Absent** → emit (non-error, this is fine):
