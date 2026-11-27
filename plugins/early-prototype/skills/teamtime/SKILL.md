@@ -30,11 +30,7 @@ These are non-negotiable — violating them triggers the auto-mode classifier an
 
 1. **Discover this session's shortId, then check `<cwd>/.claude/pm-session-<shortId>.txt`.**
 
-   **Discovery** (per `Worker-PM-System.md §10` / timeteam `DESIGN-GUIDELINES.md §2` — the skill-side method, since skills don't receive a stdin payload):
-   - Encode cwd: replace `\`, `/`, `:` with `-` (e.g. `C:\Users\<user>\timeteam` → `C--Users-<user>-timeteam`).
-   - `Glob` for `~/.claude/projects/<encoded-cwd>/*.jsonl` — the most-recently-modified result is this session's transcript.
-   - Take that filename, drop `.jsonl`, take the last 8 hex characters.
-   - **Fallback:** if any step fails, use the literal string `unknown` as the shortId. Never block PM session open over identity discovery.
+   Use `Read` on `<cwd>/.claude/session-id-${CLAUDE_SESSION_ID}.txt`. SessionStart writes the shortId on one line. Use it if it matches the last eight hex digits of the UUID in the filename, in lowercase. If the marker is missing or invalid, use `unknown`.
 
    **Marker check** (use the `Read` tool per the conventions above — do not Bash-probe it):
    - **Absent** → **STOP and explicitly prompt the user** for a one-line PM session description ("What's this session about?"). Do NOT synthesize, infer, or auto-generate it from conversation context, the inbox listing, or any other source. The description MUST come from a direct user reply — via `AskUserQuestion` or plain text prompt + wait for next message. Reject empty input. If the user replies "whatever" / "you decide" / similar non-answer, ask again and explain why: the description is the PM session title that goes into the session-log filename and is the anchor for the session's posture. Write the user-provided description to `<cwd>/.claude/pm-session-<shortId>.txt`. Continue to step 2.

@@ -31,9 +31,7 @@ Non-negotiable — violating them triggers the auto-mode classifier and can brea
 
 1. **Discover this session's shortId.** Used to identify which marker belongs to THIS product session — closing one session must not affect any concurrent siblings.
 
-   - Encode cwd: replace `\`, `/`, `:` with `-`.
-   - `Glob` for `~/.claude/projects/<encoded-cwd>/*.jsonl` — the most-recently-modified result's filename minus `.jsonl` is the full UUID; the last 8 hex characters are the **shortId**.
-   - **Fallback:** if discovery fails, use the literal string `unknown` as the shortId. The skill will then operate on `prod-session-unknown.txt` — almost certainly absent, in which case step 2 emits the "no product session" message and exits clean. Never block close-out over identity discovery.
+   Use `Read` on `<cwd>/.claude/session-id-${CLAUDE_SESSION_ID}.txt`. SessionStart writes the shortId on one line. Use it if it matches the last eight hex digits of the UUID in the filename, in lowercase. If the marker is missing or invalid, use `unknown`.
 
 2. **Read `<cwd>/.claude/prod-session-<shortId>.txt`** (use the `Read` tool — do not Bash-probe it):
    - **Absent** → emit (non-error, this is fine):

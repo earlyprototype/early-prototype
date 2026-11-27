@@ -51,9 +51,7 @@ Per `~/.claude/rules/performance.md`: Haiku is the correct cost tier for determi
 
 0. **Discover this session's shortId.** Used by every step below.
 
-   - Encode cwd: replace `\`, `/`, `:` with `-`.
-   - `Glob` for `~/.claude/projects/<encoded-cwd>/*.jsonl` — the most-recently-modified result's filename minus `.jsonl` is the **full UUID** (kept for step 4a); the last 8 hex characters are the **shortId**.
-   - **Fallback:** if discovery fails, use the literal string `unknown` as the shortId AND skip the full-UUID write in step 4a. Never block Worker open over identity discovery.
+   Use `Read` on `<cwd>/.claude/session-id-${CLAUDE_SESSION_ID}.txt`. SessionStart writes the shortId on one line. Use it if it matches the last eight hex digits of the UUID in the filename, in lowercase. If the marker is missing or invalid, use `unknown`.
 
 1. **`<cwd>/.claude/pm-session-<shortId>.txt` must exist.** If absent, abort with:
 
@@ -86,7 +84,7 @@ Per `~/.claude/rules/performance.md`: Haiku is the correct cost tier for determi
 
 4. **Write `<cwd>/.claude/active-task-<shortId>.txt`** with the chosen title (single line). Create `<cwd>/.claude/` via `mkdir -p` if absent.
 
-4a. **Write `<cwd>/.claude/worker-session-id-<shortId>.txt`** containing the current Claude Code session's full UUID on one line. Session-id gate for the Stop hook (prevents concurrent sessions in the same cwd from producing duplicate handoffs). The full UUID was already discovered in step 0; just `Write` it now. If step 0's discovery returned `unknown`, skip writing this marker — Stop hook falls back to legacy gate.
+4a. **Write `<cwd>/.claude/worker-session-id-<shortId>.txt`** with the full UUID `${CLAUDE_SESSION_ID}` on one line. Skip this write if the shortId is `unknown`.
 
 5. **Call kanbanger MCP `move_task`** with `title=<chosen title>`, `from_column=<TODO|BACKLOG>`, `to_column="DOING"`.
    - On `ERROR_TASK_NOT_FOUND`: someone else moved the task between `list_tasks` and `move_task`. Re-fetch the queue (`list_tasks` again) and either retry with a fresh pick or abort if queue is now empty.

@@ -7,7 +7,7 @@ description: |
   the canonical §6 handoff for review, then appends the PM:READ marker
   to the pointer so it's filtered out of future SessionStart and
   `/check-handoffs` surfacing. Requires an open PM session
-  (`<cwd>/.claude/pm-session.txt`). Companion to `/check-handoffs`
+  (`<cwd>/.claude/pm-session-<shortId>.txt`). Companion to `/check-handoffs`
   (lists without acknowledging) and the SessionStart auto-discovery hook.
 ---
 
@@ -21,19 +21,13 @@ Non-negotiable — violating them triggers the auto-mode classifier and can brea
 
 - **File existence / content checks → use the `Read` tool.** Treat "file does not exist" error as Absent. Do **NOT** use Bash `test -f`, `[[ -f ... ]]`, `Test-Path`, `Get-Content`, `cat`, `ls`, or any PowerShell-style probe.
 - **Listing inbox files → use the `Glob` tool** (e.g., `<cwd>/.claude/inbox/pm/handoff-*.md`).
-- **Globbing for the transcript path (PM identity discovery) → use the `Glob` tool** against `~/.claude/projects/<encoded-cwd>/*.jsonl`.
 - **Appending the PM:READ marker → use the `Edit` tool** (append the marker line to the existing pointer file). Not Bash redirection (`>>`) — `Edit` is cleaner and explicit.
 
 ## PM identity (shortId)
 
 When marking a pointer PM:READ, stamp the marker with the **current PM session's shortId** — the last 8 hex characters of the Claude Code session UUID. This attributes the acknowledgement to a specific PM session (matters in split-session and audit contexts).
 
-**Discovery:** identical pattern to `/notetime`'s Worker identity discovery, but the value is labelled `pm:` instead of `worker:` in the marker.
-
-1. Encode cwd: replace `\` `/` `:` with `-`.
-2. `Glob` `~/.claude/projects/<encoded-cwd>/*.jsonl`.
-3. Take the most recently-modified file's name, drop `.jsonl`, take last 8 hex chars.
-4. If discovery fails, use `unknown` literally — don't fail the acknowledgement over identity.
+Use `Read` on `<cwd>/.claude/session-id-${CLAUDE_SESSION_ID}.txt`. SessionStart writes the shortId on one line. Use it if it matches the last eight hex digits of the UUID in the filename, in lowercase. If the marker is missing or invalid, use `unknown`.
 
 The marker format is:
 
@@ -45,7 +39,7 @@ The legacy form (no `pm:` suffix) remains valid for backward compatibility — t
 
 ## Precondition
 
-`<cwd>/.claude/pm-session.txt` must exist. If absent, abort with:
+`<cwd>/.claude/pm-session-<shortId>.txt` must exist. If absent, abort with:
 
 ```
 No PM session in this cwd. Run /teamtime first to open one, then /readtime to acknowledge handoffs.

@@ -77,11 +77,9 @@ This does not widen Product's lane: connecting and reading the board is for awar
 
 Write `<cwd>/.claude/prod-session-<shortId>.txt` **silently** (mirrors how `/teamtime` writes its shortId-scoped marker) so any Product-side tooling can detect an active product session **for this specific Claude Code instance**. The shortId scoping means two Claude instances in the same folder don't collide — each writes and clears only its own marker. **No prompt, no menu** — starting a product session must be friction-free.
 
-1. **Discover this session's shortId** (the skill-side method, since skills don't receive a stdin payload):
-   - Encode cwd: replace `\`, `/`, `:` with `-` (e.g. `C:\Users\<user>\timeteam` → `C--Users-<user>-timeteam`).
-   - `Glob` for `~/.claude/projects/<encoded-cwd>/*.jsonl` — the most-recently-modified result is this session's transcript.
-   - Take that filename, drop `.jsonl`, take the last 8 hex characters.
-   - **Fallback:** if any step fails (directory missing, no jsonl, malformed filename), use the literal string `unknown` as the shortId. Never block the open over identity discovery — opening the product session is more important than perfect attribution.
+1. **Discover this session's shortId.**
+
+   Use `Read` on `<cwd>/.claude/session-id-${CLAUDE_SESSION_ID}.txt`. SessionStart writes the shortId on one line. Use it if it matches the last eight hex digits of the UUID in the filename, in lowercase. If the marker is missing or invalid, use `unknown`.
 
 2. Ensure `.claude/` exists at cwd: one `mkdir -p "<cwd>/.claude"` Bash call (single-quoted absolute path, no chaining).
 

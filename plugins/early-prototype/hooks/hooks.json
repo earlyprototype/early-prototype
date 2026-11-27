@@ -1,5 +1,5 @@
 {
-  "description": "timeteam (early-prototype) Product/PM/Worker lifecycle hooks. Stop drops handoffs; SessionStart surfaces unread handoffs.",
+  "description": "Stop writes Worker handoffs. SessionStart records the session ID and lists unread handoffs.",
   "hooks": {
     "Stop": [
       {
